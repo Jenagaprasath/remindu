@@ -24,17 +24,12 @@ jobs:
           flutter-version: '3.22.0'
           channel: 'stable'
 
-      - name: Delete incomplete android folder
-        run: rm -rf android
-
-      - name: Create Flutter project to generate android folder
+      - name: Create Flutter project
         run: flutter create --org com.remindu --platforms android temp_project
 
-      - name: Copy generated android folder
-        run: cp -r temp_project/android ./android
-
-      - name: Copy our lib and pubspec over
+      - name: Copy our source files into temp_project
         run: |
+          rm -rf temp_project/lib
           cp -r lib temp_project/lib
           cp pubspec.yaml temp_project/pubspec.yaml
 
