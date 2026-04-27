@@ -40,13 +40,15 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           leading: Padding(
             padding: const EdgeInsets.only(left: 16),
             child: Container(
-              width: 44, height: 44,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: AppColors.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(22),
               ),
               child: IconButton(
-                icon: const Icon(Icons.chevron_left_rounded, color: AppColors.primary),
+                icon: const Icon(Icons.chevron_left_rounded,
+                    color: AppColors.primary),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -54,19 +56,25 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           actions: [
             Container(
               margin: const EdgeInsets.only(right: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(22),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.audio_file_outlined, size: 18, color: AppColors.onSurfaceVariant),
+                  const Icon(Icons.audio_file_outlined,
+                      size: 18, color: AppColors.onSurfaceVariant),
                   const SizedBox(width: 6),
-                  Text('ADD AUDIO', style: GoogleFonts.manrope(
-                    fontSize: 12, fontWeight: FontWeight.w700,
-                    color: AppColors.onSurfaceVariant,
-                  )),
+                  Text(
+                    'ADD AUDIO',
+                    style: GoogleFonts.manrope(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -78,7 +86,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
 
   Widget _buildBody() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 100, left: 24, right: 24, bottom: 140),
+      padding: const EdgeInsets.only(
+          top: 100, left: 24, right: 24, bottom: 140),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -86,7 +95,9 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           const SizedBox(height: 32),
           _buildTitleInput(),
           const SizedBox(height: 40),
-          _buildDateTimeGrid(),
+          _buildDateCard(),
+          const SizedBox(height: 16),
+          _buildTimeCard(),
           const SizedBox(height: 24),
           _buildInsightCard(),
         ],
@@ -101,16 +112,20 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
         Text(
           'CURATING YOUR MOMENTS',
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 10, fontWeight: FontWeight.w500,
-            color: AppColors.onSurfaceVariant, letterSpacing: 2,
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: AppColors.onSurfaceVariant,
+            letterSpacing: 2,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           'New Reminder',
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 36, fontWeight: FontWeight.w800,
-            color: AppColors.onSurface, letterSpacing: -1,
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            color: AppColors.onSurface,
+            letterSpacing: -1,
           ),
         ),
       ],
@@ -125,13 +140,15 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           controller: _controller,
           autofocus: false,
           style: GoogleFonts.plusJakartaSans(
-            fontSize: 28, fontWeight: FontWeight.w700,
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
             color: AppColors.onSurface,
           ),
           decoration: InputDecoration(
-            hintText: "What's on your mind?",
+            hintText: "What to remind?",
             hintStyle: GoogleFonts.plusJakartaSans(
-              fontSize: 28, fontWeight: FontWeight.w700,
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
               color: AppColors.surfaceContainerHighest,
             ),
             border: InputBorder.none,
@@ -141,7 +158,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
         ),
         const SizedBox(height: 12),
         Container(
-          width: 80, height: 3,
+          width: 80,
+          height: 3,
           decoration: BoxDecoration(
             color: AppColors.primary.withOpacity(0.2),
             borderRadius: BorderRadius.circular(2),
@@ -151,27 +169,16 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
     ).animate().fadeIn(delay: 200.ms);
   }
 
-  Widget _buildDateTimeGrid() {
-    return Row(
-      children: [
-        Expanded(child: _buildDateCard()),
-        const SizedBox(width: 16),
-        Expanded(child: _buildTimeCard()),
-      ],
-    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05);
-  }
-
   Widget _buildDateCard() {
     return Container(
-      height: 180,
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(32),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -181,35 +188,54 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('SELECT DATE', style: GoogleFonts.manrope(
-                    fontSize: 9, fontWeight: FontWeight.w700,
-                    color: AppColors.onSurfaceVariant, letterSpacing: 1.5,
-                  )),
-                  Text('Today', style: GoogleFonts.plusJakartaSans(
-                    fontSize: 16, fontWeight: FontWeight.w700,
-                    color: AppColors.onSurface,
-                  )),
+                  Text(
+                    'SELECT DATE',
+                    style: GoogleFonts.manrope(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  Text(
+                    'Today',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSurface,
+                    ),
+                  ),
                 ],
               ),
             ],
           ),
+          const SizedBox(height: 20),
           Row(
             children: List.generate(_dates.length, (i) {
               final selected = i == _selectedDateIndex;
               return Padding(
-                padding: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.only(right: 8),
                 child: GestureDetector(
                   onTap: () => setState(() => _selectedDateIndex = i),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      color: selected ? AppColors.primary : AppColors.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
+                      color: selected
+                          ? AppColors.primary
+                          : AppColors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Text(_dates[i], style: GoogleFonts.manrope(
-                      fontSize: 11, fontWeight: FontWeight.w700,
-                      color: selected ? AppColors.onPrimary : AppColors.onSurface,
-                    )),
+                    child: Text(
+                      _dates[i],
+                      style: GoogleFonts.manrope(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: selected
+                            ? AppColors.onPrimary
+                            : AppColors.onSurface,
+                      ),
+                    ),
                   ),
                 ),
               );
@@ -217,46 +243,54 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05);
   }
 
   Widget _buildTimeCard() {
     return Container(
-      height: 180,
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(32),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              const Icon(Icons.schedule_rounded, color: AppColors.primary, size: 28),
-              const SizedBox(width: 10),
+              const Icon(Icons.schedule_rounded,
+                  color: AppColors.primary, size: 28),
+              const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('SET TIME', style: GoogleFonts.manrope(
-                    fontSize: 9, fontWeight: FontWeight.w700,
-                    color: AppColors.onSurfaceVariant, letterSpacing: 1.5,
-                  )),
+                  Text(
+                    'SET TIME',
+                    style: GoogleFonts.manrope(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
                   RichText(
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: '${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} ',
+                          text:
+                              '${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} ',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 24, fontWeight: FontWeight.w800,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
                             color: AppColors.onSurface,
                           ),
                         ),
                         TextSpan(
                           text: _isAm ? 'AM' : 'PM',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14, fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                             color: AppColors.onSurfaceVariant,
                           ),
                         ),
@@ -267,45 +301,67 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 20),
+          Container(height: 1, color: AppColors.onSurface.withOpacity(0.05)),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
                 onTap: () => setState(() {
-                  if (_minute >= 15) _minute -= 15;
-                  else if (_hour > 0) { _hour--; _minute = 45; }
+                  if (_minute >= 15) {
+                    _minute -= 15;
+                  } else if (_hour > 0) {
+                    _hour--;
+                    _minute = 45;
+                  }
                 }),
                 child: Container(
-                  width: 36, height: 36,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+                    border: Border.all(
+                        color: AppColors.outlineVariant.withOpacity(0.3)),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.remove_rounded, size: 16, color: AppColors.onSurfaceVariant),
+                  child: const Icon(Icons.remove_rounded,
+                      size: 18, color: AppColors.onSurfaceVariant),
                 ),
               ),
-              Text('Quick Adjust', style: GoogleFonts.manrope(
-                fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.onSurfaceVariant,
-              )),
+              Text(
+                'Quick Adjust',
+                style: GoogleFonts.manrope(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
               GestureDetector(
                 onTap: () => setState(() {
-                  if (_minute < 45) _minute += 15;
-                  else { _hour = (_hour % 12) + 1; _minute = 0; }
+                  if (_minute < 45) {
+                    _minute += 15;
+                  } else {
+                    _hour = (_hour % 12) + 1;
+                    _minute = 0;
+                  }
                 }),
                 child: Container(
-                  width: 36, height: 36,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.outlineVariant.withOpacity(0.3)),
+                    border: Border.all(
+                        color: AppColors.outlineVariant.withOpacity(0.3)),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.add_rounded, size: 16, color: AppColors.onSurfaceVariant),
+                  child: const Icon(Icons.add_rounded,
+                      size: 18, color: AppColors.onSurfaceVariant),
                 ),
               ),
             ],
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.05);
   }
 
   Widget _buildInsightCard() {
@@ -318,12 +374,14 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
       child: Row(
         children: [
           Container(
-            width: 60, height: 60,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.wb_sunny_outlined, color: AppColors.tertiary, size: 28),
+            child: const Icon(Icons.wb_sunny_outlined,
+                color: AppColors.tertiary, size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -333,7 +391,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                 Text(
                   '"Focus is the art of knowing what to ignore."',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13, fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.onSecondaryContainer,
                     fontStyle: FontStyle.italic,
                   ),
@@ -342,7 +401,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                 Text(
                   'Suggested for your morning flow',
                   style: GoogleFonts.manrope(
-                    fontSize: 11, color: AppColors.onSurfaceVariant,
+                    fontSize: 11,
+                    color: AppColors.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -355,7 +415,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
 
   Widget _buildBottomBar() {
     return Container(
-      padding: const EdgeInsets.only(left: 24, right: 24, bottom: 32, top: 16),
+      padding:
+          const EdgeInsets.only(left: 24, right: 24, bottom: 32, top: 16),
       color: AppColors.surface.withOpacity(0.7),
       child: Row(
         children: [
@@ -365,12 +426,18 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: const StadiumBorder(),
-                side: BorderSide(color: AppColors.outlineVariant.withOpacity(0.3)),
+                side: BorderSide(
+                    color: AppColors.outlineVariant.withOpacity(0.3)),
               ),
-              child: Text('CANCEL', style: GoogleFonts.plusJakartaSans(
-                fontSize: 13, fontWeight: FontWeight.w800,
-                color: AppColors.onSurface, letterSpacing: 1,
-              )),
+              child: Text(
+                'CANCEL',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.onSurface,
+                  letterSpacing: 1,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -400,10 +467,15 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                   shadowColor: Colors.transparent,
                   shape: const StadiumBorder(),
                 ),
-                child: Text('OK', style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13, fontWeight: FontWeight.w800,
-                  color: AppColors.onPrimary, letterSpacing: 2,
-                )),
+                child: Text(
+                  'OK',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.onPrimary,
+                    letterSpacing: 2,
+                  ),
+                ),
               ),
             ),
           ),
@@ -413,8 +485,5 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
   }
 }
 
-// Add this to AppColors in app_theme.dart if missing
-extension AppColorsExt on AppColors {
-  static const surfaceContainerHigh = Color(0xFFEAE7F1);
-  static const onSecondaryContainer = Color(0xFF505064);
-}
+const surfaceContainerHigh = Color(0xFFEAE7F1);
+const onSecondaryContainer = Color(0xFF505064);
