@@ -53,32 +53,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
               ),
             ),
           ),
-          actions: [
-            Container(
-              margin: const EdgeInsets.only(right: 16),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.audio_file_outlined,
-                      size: 18, color: AppColors.onSurfaceVariant),
-                  const SizedBox(width: 6),
-                  Text(
-                    'ADD AUDIO',
-                    style: GoogleFonts.manrope(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          actions: const [],
         ),
       ),
     );
@@ -99,7 +74,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           const SizedBox(height: 16),
           _buildTimeCard(),
           const SizedBox(height: 24),
-          _buildInsightCard(),
+          _buildMicAudioButtons(),
         ],
       ),
     );
@@ -287,7 +262,9 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          Container(height: 1, color: AppColors.onSurface.withOpacity(0.05)),
+          Container(
+              height: 1,
+              color: AppColors.onSurface.withOpacity(0.05)),
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -306,7 +283,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                   height: 44,
                   decoration: BoxDecoration(
                     border: Border.all(
-                        color: AppColors.outlineVariant.withOpacity(0.3)),
+                        color:
+                            AppColors.outlineVariant.withOpacity(0.3)),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.remove_rounded,
@@ -335,7 +313,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                   height: 44,
                   decoration: BoxDecoration(
                     border: Border.all(
-                        color: AppColors.outlineVariant.withOpacity(0.3)),
+                        color:
+                            AppColors.outlineVariant.withOpacity(0.3)),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.add_rounded,
@@ -349,53 +328,88 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
     ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.05);
   }
 
-  Widget _buildInsightCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.secondaryContainer.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(32),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.wb_sunny_outlined,
-                color: AppColors.tertiary, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '"Focus is the art of knowing what to ignore."',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.onSecondaryContainer,
-                    fontStyle: FontStyle.italic,
+  Widget _buildMicAudioButtons() {
+    return Row(
+      children: [
+        // MIC BUTTON
+        Expanded(
+          child: GestureDetector(
+            onTap: () {},
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: AppColors.secondaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.mic_rounded,
+                        color: AppColors.primary, size: 26),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Suggested for your morning flow',
-                  style: GoogleFonts.manrope(
-                    fontSize: 11,
-                    color: AppColors.onSurfaceVariant,
+                  const SizedBox(height: 10),
+                  Text(
+                    'MIC',
+                    style: GoogleFonts.manrope(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 400.ms);
+        ),
+        const SizedBox(width: 16),
+        // ADD AUDIO BUTTON
+        Expanded(
+          child: GestureDetector(
+            onTap: () {},
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: AppColors.secondaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.audio_file_rounded,
+                        color: AppColors.primary, size: 26),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'ADD AUDIO',
+                    style: GoogleFonts.manrope(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onSurfaceVariant,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05);
   }
 
   Widget _buildBottomBar() {
