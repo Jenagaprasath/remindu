@@ -106,29 +106,14 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
   }
 
   Widget _buildEditorialHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'CURATING YOUR MOMENTS',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: AppColors.onSurfaceVariant,
-            letterSpacing: 2,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'New Reminder',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 36,
-            fontWeight: FontWeight.w800,
-            color: AppColors.onSurface,
-            letterSpacing: -1,
-          ),
-        ),
-      ],
+    return Text(
+      'New Reminder',
+      style: GoogleFonts.plusJakartaSans(
+        fontSize: 36,
+        fontWeight: FontWeight.w800,
+        color: AppColors.onSurface,
+        letterSpacing: -1,
+      ),
     ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.05);
   }
 
@@ -415,8 +400,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
 
   Widget _buildBottomBar() {
     return Container(
-      padding:
-          const EdgeInsets.only(left: 24, right: 24, bottom: 32, top: 16),
+      padding: const EdgeInsets.only(
+          left: 24, right: 24, bottom: 32, top: 16),
       color: AppColors.surface.withOpacity(0.7),
       child: Row(
         children: [
