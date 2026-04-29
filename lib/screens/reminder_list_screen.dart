@@ -21,14 +21,43 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
+      extendBodyBehindAppBar: true,
+      appBar: _buildAppBar(),
       body: _buildBody(),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
+  PreferredSizeWidget _buildAppBar() {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(72),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface.withOpacity(0.7),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.05),
+              blurRadius: 20,
+            ),
+          ],
+        ),
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.primary),
+              onPressed: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBody() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 72, left: 24, right: 24, bottom: 120),
+      padding: const EdgeInsets.only(top: 100, left: 24, right: 24, bottom: 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -64,8 +93,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         Row(
           children: [
             Container(
-              width: 8,
-              height: 8,
+              width: 8, height: 8,
               decoration: const BoxDecoration(
                 color: AppColors.tertiary,
                 shape: BoxShape.circle,
@@ -106,8 +134,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.secondaryContainer,
                   borderRadius: BorderRadius.circular(8),
@@ -124,8 +151,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
               ),
               const SizedBox(width: 8),
               Container(
-                width: 6,
-                height: 6,
+                width: 6, height: 6,
                 decoration: const BoxDecoration(
                   color: AppColors.tertiary,
                   shape: BoxShape.circle,
@@ -159,13 +185,9 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
   Widget _buildTwoColumnCards() {
     return Row(
       children: [
-        Expanded(
-            child: _buildSmallCard(
-                _reminders[1], AppColors.surfaceContainerLow)),
+        Expanded(child: _buildSmallCard(_reminders[1], AppColors.surfaceContainerLow)),
         const SizedBox(width: 12),
-        Expanded(
-            child: _buildSmallCard(
-                _reminders[2], AppColors.surfaceContainerHighest)),
+        Expanded(child: _buildSmallCard(_reminders[2], AppColors.surfaceContainerHighest)),
       ],
     ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05);
   }
@@ -197,8 +219,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
@@ -213,9 +234,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                   ),
                 ),
               ),
-              Icon(Icons.edit_rounded,
-                  size: 18,
-                  color: AppColors.onSurfaceVariant.withOpacity(0.5)),
+              Icon(Icons.edit_rounded, size: 18, color: AppColors.onSurfaceVariant.withOpacity(0.5)),
             ],
           ),
         ],
@@ -229,17 +248,14 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(24),
-        border:
-            Border.all(color: AppColors.primary.withOpacity(0.05)),
+        border: Border.all(color: AppColors.primary.withOpacity(0.05)),
       ),
       child: Row(
         children: [
           Container(
-            width: 20,
-            height: 20,
+            width: 20, height: 20,
             decoration: BoxDecoration(
-              border: Border.all(
-                  color: AppColors.outlineVariant, width: 2),
+              border: Border.all(color: AppColors.outlineVariant, width: 2),
               borderRadius: BorderRadius.circular(6),
             ),
           ),
@@ -266,9 +282,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
               ],
             ),
           ),
-          Icon(Icons.edit_rounded,
-              size: 18,
-              color: AppColors.onSurfaceVariant.withOpacity(0.4)),
+          Icon(Icons.edit_rounded, size: 18, color: AppColors.onSurfaceVariant.withOpacity(0.4)),
         ],
       ),
     ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.05);
@@ -282,6 +296,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         border: Border.all(
           color: AppColors.surfaceContainerHighest,
           width: 2,
+          strokeAlign: BorderSide.strokeAlignInside,
         ),
         borderRadius: BorderRadius.circular(40),
       ),
@@ -311,12 +326,10 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
 
   Widget _buildBottomNav() {
     return Container(
-      padding: const EdgeInsets.only(
-          left: 24, right: 24, bottom: 28, top: 12),
+      padding: const EdgeInsets.only(left: 24, right: 24, bottom: 28, top: 12),
       decoration: BoxDecoration(
         color: AppColors.surface.withOpacity(0.7),
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withOpacity(0.05),
@@ -325,31 +338,36 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
           ),
         ],
       ),
-      child: Center(
-        child: GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (_) => const ReminderSettingScreen()),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Container(
+            width: 48, height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primaryContainer.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.home_rounded, color: AppColors.primary),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.add_circle_outline_rounded,
-                  color: AppColors.primary, size: 28),
-              const SizedBox(height: 2),
-              Text(
-                'NEW',
-                style: GoogleFonts.manrope(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ReminderSettingScreen()),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.add_circle_outline_rounded, color: AppColors.onSurfaceVariant),
+                const SizedBox(height: 2),
+                Text('NEW', style: GoogleFonts.manrope(
+                  fontSize: 10, fontWeight: FontWeight.w700,
+                  color: AppColors.onSurfaceVariant, letterSpacing: 1.5,
+                )),
+              ],
+            ),
           ),
-        ),
+          const Icon(Icons.person_outline_rounded, color: AppColors.onSurfaceVariant),
+        ],
       ),
     );
   }
