@@ -32,12 +32,15 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
   }
 
   String get _formattedTime {
-    final hour = _selectedTime.hourOfPeriod == 0 ? 12 : _selectedTime.hourOfPeriod;
+    final hour = _selectedTime.hourOfPeriod == 0
+        ? 12
+        : _selectedTime.hourOfPeriod;
     final minute = _selectedTime.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
   }
 
-  String get _period => _selectedTime.period == DayPeriod.am ? 'AM' : 'PM';
+  String get _period =>
+      _selectedTime.period == DayPeriod.am ? 'AM' : 'PM';
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -49,15 +52,13 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              // Selected date circle
               primary: AppColors.primary,
               onPrimary: AppColors.onPrimary,
-              // Dialog background
               surface: AppColors.surfaceContainerLowest,
               onSurface: AppColors.onSurface,
-              // Day headers S M T W T F S - light color
-              onSurfaceVariant: Color(0xFFB3B0BC),
-              // Outline for today border
+              // S M T W T F S — purple color
+              onSurfaceVariant: AppColors.primary,
+              surfaceVariant: AppColors.primaryContainer,
               outline: AppColors.primaryContainer,
               secondaryContainer: AppColors.primaryContainer,
               onSecondaryContainer: AppColors.primary,
@@ -65,11 +66,12 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.primary,
-                minimumSize: const Size(80, 52),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                minimumSize: const Size(88, 56),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 28, vertical: 16),
                 textStyle: GoogleFonts.manrope(
                   fontWeight: FontWeight.w800,
-                  fontSize: 15,
+                  fontSize: 16,
                   letterSpacing: 1,
                 ),
               ),
@@ -102,10 +104,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
               onPrimary: AppColors.onPrimary,
               surface: AppColors.surfaceContainerLowest,
               onSurface: AppColors.onSurface,
-              // AM/PM selected background - light purple
               secondaryContainer: AppColors.primaryContainer,
               onSecondaryContainer: AppColors.primary,
-              // AM/PM unselected
               surfaceVariant: Color(0xFFF6F2FB),
               onSurfaceVariant: AppColors.onSurfaceVariant,
               tertiary: AppColors.tertiary,
@@ -113,22 +113,21 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.primary,
-                minimumSize: const Size(80, 52),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                minimumSize: const Size(88, 56),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 28, vertical: 16),
                 textStyle: GoogleFonts.manrope(
                   fontWeight: FontWeight.w800,
-                  fontSize: 15,
+                  fontSize: 16,
                   letterSpacing: 1,
                 ),
               ),
             ),
             timePickerTheme: TimePickerThemeData(
               backgroundColor: AppColors.surfaceContainerLowest,
-              // Hour/minute boxes
               hourMinuteShape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              // AM/PM selector shape
               dayPeriodShape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: const BorderSide(
@@ -136,7 +135,6 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                   width: 1.5,
                 ),
               ),
-              // AM/PM colors - light
               dayPeriodColor: MaterialStateColor.resolveWith((states) =>
                   states.contains(MaterialState.selected)
                       ? AppColors.primaryContainer
@@ -149,11 +147,9 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                 fontWeight: FontWeight.w800,
                 fontSize: 14,
               ),
-              // Dialog shape
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(32),
               ),
-              // Hour/minute box colors
               hourMinuteColor: MaterialStateColor.resolveWith((states) =>
                   states.contains(MaterialState.selected)
                       ? AppColors.primary
@@ -162,7 +158,6 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                   states.contains(MaterialState.selected)
                       ? AppColors.onPrimary
                       : AppColors.onSurface),
-              // Clock dial
               dialBackgroundColor: AppColors.surfaceContainerLow,
               dialHandColor: AppColors.primary,
               dialTextColor: MaterialStateColor.resolveWith((states) =>
