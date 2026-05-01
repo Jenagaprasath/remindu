@@ -12,12 +12,130 @@ class ReminderSettingScreen extends StatefulWidget {
 
 class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
   final TextEditingController _controller = TextEditingController();
-  int _selectedDateIndex = 1;
-  int _hour = 9;
-  int _minute = 0;
-  bool _isAm = true;
+  DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
 
-  final List<String> _dates = ['Apr 21', 'Apr 22', 'Apr 23'];
+  String get _formattedDate {
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final days = [
+      'Monday', 'Tuesday', 'Wednesday',
+      'Thursday', 'Friday', 'Saturday', 'Sunday'
+    ];
+    final isToday = _selectedDate.day == DateTime.now().day &&
+        _selectedDate.month == DateTime.now().month &&
+        _selectedDate.year == DateTime.now().year;
+    if (isToday) return 'Today';
+    return '${days[_selectedDate.weekday - 1]}, ${months[_selectedDate.month - 1]} ${_selectedDate.day}';
+  }
+
+  String get _formattedTime {
+    final hour = _selectedTime.hourOfPeriod == 0 ? 12 : _selectedTime.hourOfPeriod;
+    final minute = _selectedTime.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  String get _period => _selectedTime.period == DayPeriod.am ? 'AM' : 'PM';
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: AppColors.onPrimary,
+              surface: AppColors.surfaceContainerLowest,
+              onSurface: AppColors.onSurface,
+              secondaryContainer: AppColors.primaryContainer,
+              onSecondaryContainer: AppColors.onPrimaryContainer,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                textStyle: GoogleFonts.manrope(fontWeight: FontWeight.w700),
+              ),
+            ),
+            dialogTheme: DialogTheme(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
+  }
+
+  Future<void> _pickTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      initialEntryMode: TimePickerEntryMode.dial,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: AppColors.onPrimary,
+              surface: AppColors.surfaceContainerLowest,
+              onSurface: AppColors.onSurface,
+              secondaryContainer: AppColors.primaryContainer,
+              onSecondaryContainer: AppColors.onPrimaryContainer,
+              tertiary: AppColors.tertiary,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                textStyle: GoogleFonts.manrope(fontWeight: FontWeight.w700),
+              ),
+            ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: AppColors.surfaceContainerLowest,
+              hourMinuteShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              dayPeriodShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32),
+              ),
+              hourMinuteColor: MaterialStateColor.resolveWith((states) =>
+                  states.contains(MaterialState.selected)
+                      ? AppColors.primary
+                      : AppColors.surfaceContainerHighest),
+              hourMinuteTextColor: MaterialStateColor.resolveWith((states) =>
+                  states.contains(MaterialState.selected)
+                      ? AppColors.onPrimary
+                      : AppColors.onSurface),
+              dialBackgroundColor: AppColors.surfaceContainerLow,
+              dialHandColor: AppColors.primary,
+              dialTextColor: MaterialStateColor.resolveWith((states) =>
+                  states.contains(MaterialState.selected)
+                      ? AppColors.onPrimary
+                      : AppColors.onSurface),
+              entryModeIconColor: AppColors.primary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _selectedTime = picked);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,200 +248,147 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
   }
 
   Widget _buildDateCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(32),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(Icons.calendar_today_rounded,
-                  color: AppColors.tertiary, size: 28),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'SELECT DATE',
-                    style: GoogleFonts.manrope(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurfaceVariant,
-                      letterSpacing: 1.5,
-                    ),
+    return GestureDetector(
+      onTap: _pickDate,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(32),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppColors.secondaryContainer,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  Text(
-                    'Today',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: List.generate(_dates.length, (i) {
-              final selected = i == _selectedDateIndex;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () => setState(() => _selectedDateIndex = i),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? AppColors.primary
-                          : AppColors.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Text(
-                      _dates[i],
+                  child: const Icon(Icons.calendar_today_rounded,
+                      color: AppColors.primary, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'DATE',
                       style: GoogleFonts.manrope(
-                        fontSize: 13,
+                        fontSize: 9,
                         fontWeight: FontWeight.w700,
-                        color: selected
-                            ? AppColors.onPrimary
-                            : AppColors.onSurface,
+                        color: AppColors.onSurfaceVariant,
+                        letterSpacing: 1.5,
                       ),
                     ),
-                  ),
+                    Text(
+                      _formattedDate,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            }),
-          ),
-        ],
+              ],
+            ),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.onSurfaceVariant, size: 20),
+            ),
+          ],
+        ),
       ),
     ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05);
   }
 
   Widget _buildTimeCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(32),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.schedule_rounded,
-                  color: AppColors.primary, size: 28),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'SET TIME',
-                    style: GoogleFonts.manrope(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurfaceVariant,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text:
-                              '${_hour.toString().padLeft(2, '0')}:${_minute.toString().padLeft(2, '0')} ',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.onSurface,
-                          ),
-                        ),
-                        TextSpan(
-                          text: _isAm ? 'AM' : 'PM',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Container(
-              height: 1,
-              color: AppColors.onSurface.withOpacity(0.05)),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              GestureDetector(
-                onTap: () => setState(() {
-                  if (_minute >= 15) {
-                    _minute -= 15;
-                  } else if (_hour > 0) {
-                    _hour--;
-                    _minute = 45;
-                  }
-                }),
-                child: Container(
-                  width: 44,
-                  height: 44,
+    return GestureDetector(
+      onTap: _pickTime,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(32),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
                   decoration: BoxDecoration(
-                    border: Border.all(
-                        color:
-                            AppColors.outlineVariant.withOpacity(0.3)),
-                    shape: BoxShape.circle,
+                    color: AppColors.primaryContainer.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(Icons.remove_rounded,
-                      size: 18, color: AppColors.onSurfaceVariant),
+                  child: const Icon(Icons.schedule_rounded,
+                      color: AppColors.primary, size: 24),
                 ),
-              ),
-              Text(
-                'Quick Adjust',
-                style: GoogleFonts.manrope(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.onSurfaceVariant,
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'TIME',
+                      style: GoogleFonts.manrope(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.onSurfaceVariant,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: _formattedTime,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.onSurface,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' $_period',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
+              ],
+            ),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(12),
               ),
-              GestureDetector(
-                onTap: () => setState(() {
-                  if (_minute < 45) {
-                    _minute += 15;
-                  } else {
-                    _hour = (_hour % 12) + 1;
-                    _minute = 0;
-                  }
-                }),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                        color:
-                            AppColors.outlineVariant.withOpacity(0.3)),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.add_rounded,
-                      size: 18, color: AppColors.onSurfaceVariant),
-                ),
-              ),
-            ],
-          ),
-        ],
+              child: const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.onSurfaceVariant, size: 20),
+            ),
+          ],
+        ),
       ),
     ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.05);
   }
@@ -331,7 +396,6 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
   Widget _buildMicAudioButtons() {
     return Row(
       children: [
-        // MIC BUTTON
         Expanded(
           child: GestureDetector(
             onTap: () {},
@@ -347,7 +411,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                   Container(
                     width: 52,
                     height: 52,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.secondaryContainer,
                       shape: BoxShape.circle,
                     ),
@@ -370,7 +434,6 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           ),
         ),
         const SizedBox(width: 16),
-        // ADD AUDIO BUTTON
         Expanded(
           child: GestureDetector(
             onTap: () {},
@@ -386,7 +449,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                   Container(
                     width: 52,
                     height: 52,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.secondaryContainer,
                       shape: BoxShape.circle,
                     ),
