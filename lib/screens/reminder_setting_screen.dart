@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:uuid/uuid.dart';
 import '../theme/app_theme.dart';
+import '../models/reminder.dart';
+import '../services/storage_service.dart';
+import '../services/notification_service.dart';
 
 class ReminderSettingScreen extends StatefulWidget {
   const ReminderSettingScreen({super.key});
@@ -14,6 +18,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
   final TextEditingController _controller = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
+  RepeatType _selectedRepeat = RepeatType.once;
 
   String get _formattedDate {
     final months = [
@@ -47,7 +52,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -56,7 +61,6 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
               onPrimary: AppColors.onPrimary,
               surface: AppColors.surfaceContainerLowest,
               onSurface: AppColors.onSurface,
-              // S M T W T F S — purple color
               onSurfaceVariant: AppColors.primary,
               surfaceVariant: AppColors.primaryContainer,
               outline: AppColors.primaryContainer,
@@ -86,9 +90,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
         );
       },
     );
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
-    }
+    if (picked != null) setState(() => _selectedDate = picked);
   }
 
   Future<void> _pickTime() async {
@@ -108,7 +110,6 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
               onSecondaryContainer: AppColors.primary,
               surfaceVariant: Color(0xFFF6F2FB),
               onSurfaceVariant: AppColors.onSurfaceVariant,
-              tertiary: AppColors.tertiary,
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
@@ -131,9 +132,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
               dayPeriodShape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: const BorderSide(
-                  color: AppColors.primaryContainer,
-                  width: 1.5,
-                ),
+                    color: AppColors.primaryContainer, width: 1.5),
               ),
               dayPeriodColor: MaterialStateColor.resolveWith((states) =>
                   states.contains(MaterialState.selected)
@@ -171,9 +170,43 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
         );
       },
     );
-    if (picked != null) {
-      setState(() => _selectedTime = picked);
+    if (picked != null) setState(() => _selectedTime = picked);
+  }
+
+  Future<void> _saveReminder() async {
+    if (_controller.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enter a reminder title',
+              style: GoogleFonts.manrope(fontWeight: FontWeight.w600)),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      );
+      return;
     }
+
+    final scheduledDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+
+    final reminder = Reminder(
+      id: const Uuid().v4(),
+      title: _controller.text.trim(),
+      dateTime: scheduledDateTime,
+      repeatType: _selectedRepeat,
+    );
+
+    await StorageService.addReminder(reminder);
+    await NotificationService.scheduleReminder(reminder);
+
+    if (mounted) Navigator.pop(context, true);
   }
 
   @override
@@ -226,7 +259,9 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           _buildEditorialHeader(),
           const SizedBox(height: 32),
           _buildTitleInput(),
-          const SizedBox(height: 40),
+          const SizedBox(height: 32),
+          _buildRepeatSelector(),
+          const SizedBox(height: 24),
           _buildDateCard(),
           const SizedBox(height: 16),
           _buildTimeCard(),
@@ -286,6 +321,82 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
     ).animate().fadeIn(delay: 200.ms);
   }
 
+  Widget _buildRepeatSelector() {
+    final options = [
+      RepeatType.once,
+      RepeatType.daily,
+      RepeatType.weekly,
+      RepeatType.monthly,
+      RepeatType.yearly,
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'REPEAT',
+          style: GoogleFonts.manrope(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: AppColors.onSurfaceVariant,
+            letterSpacing: 2,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: options.map((type) {
+              final selected = _selectedRepeat == type;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedRepeat = type),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? AppColors.primary
+                          : AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(14),
+                      border: selected
+                          ? null
+                          : Border.all(
+                              color: AppColors.outlineVariant
+                                  .withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        if (selected) ...[
+                          const Icon(Icons.check_rounded,
+                              size: 14, color: AppColors.onPrimary),
+                          const SizedBox(width: 4),
+                        ],
+                        Text(
+                          type.name.toUpperCase(),
+                          style: GoogleFonts.manrope(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: selected
+                                ? AppColors.onPrimary
+                                : AppColors.onSurfaceVariant,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    ).animate().fadeIn(delay: 250.ms);
+  }
+
   Widget _buildDateCard() {
     return GestureDetector(
       onTap: _pickDate,
@@ -315,23 +426,19 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'DATE',
-                      style: GoogleFonts.manrope(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onSurfaceVariant,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    Text(
-                      _formattedDate,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface,
-                      ),
-                    ),
+                    Text('DATE',
+                        style: GoogleFonts.manrope(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.onSurfaceVariant,
+                          letterSpacing: 1.5,
+                        )),
+                    Text(_formattedDate,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.onSurface,
+                        )),
                   ],
                 ),
               ],
@@ -381,15 +488,13 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'TIME',
-                      style: GoogleFonts.manrope(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onSurfaceVariant,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
+                    Text('TIME',
+                        style: GoogleFonts.manrope(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.onSurfaceVariant,
+                          letterSpacing: 1.5,
+                        )),
                     RichText(
                       text: TextSpan(
                         children: [
@@ -458,15 +563,13 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                         color: AppColors.primary, size: 26),
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    'MIC',
-                    style: GoogleFonts.manrope(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.onSurfaceVariant,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
+                  Text('MIC',
+                      style: GoogleFonts.manrope(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.onSurfaceVariant,
+                        letterSpacing: 1.5,
+                      )),
                 ],
               ),
             ),
@@ -496,15 +599,13 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                         color: AppColors.primary, size: 26),
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    'ADD AUDIO',
-                    style: GoogleFonts.manrope(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.onSurfaceVariant,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
+                  Text('ADD AUDIO',
+                      style: GoogleFonts.manrope(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.onSurfaceVariant,
+                        letterSpacing: 1.5,
+                      )),
                 ],
               ),
             ),
@@ -530,15 +631,13 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                 side: BorderSide(
                     color: AppColors.outlineVariant.withOpacity(0.3)),
               ),
-              child: Text(
-                'CANCEL',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.onSurface,
-                  letterSpacing: 1,
-                ),
-              ),
+              child: Text('CANCEL',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.onSurface,
+                    letterSpacing: 1,
+                  )),
             ),
           ),
           const SizedBox(width: 12),
@@ -561,22 +660,20 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                 ],
               ),
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: _saveReminder,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
                   shape: const StadiumBorder(),
                 ),
-                child: Text(
-                  'OK',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.onPrimary,
-                    letterSpacing: 2,
-                  ),
-                ),
+                child: Text('SAVE',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onPrimary,
+                      letterSpacing: 2,
+                    )),
               ),
             ),
           ),

@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'services/notification_service.dart';
+import 'services/storage_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/reminder_list_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
   );
+
+  await NotificationService.init();
+  await StorageService.deleteExpiredOnceReminders();
+
   runApp(const ReminduApp());
 }
 

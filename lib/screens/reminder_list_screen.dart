@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
 import '../models/reminder.dart';
+import '../services/storage_service.dart';
+import '../services/notification_service.dart';
 import 'reminder_setting_screen.dart';
 
 class ReminderListScreen extends StatefulWidget {
@@ -13,9 +15,36 @@ class ReminderListScreen extends StatefulWidget {
 }
 
 class _ReminderListScreenState extends State<ReminderListScreen> {
-  final List<Reminder> _reminders = List.from(sampleReminders);
+  List<Reminder> _reminders = [];
+  bool _loading = true;
 
-  int get _remaining => _reminders.where((r) => !r.isCompleted).length;
+  @override
+  void initState() {
+    super.initState();
+    _loadReminders();
+  }
+
+  Future<void> _loadReminders() async {
+    final reminders = await StorageService.loadReminders();
+    setState(() {
+      _reminders = reminders;
+      _loading = false;
+    });
+  }
+
+  Future<void> _deleteReminder(Reminder reminder) async {
+    await StorageService.deleteReminder(reminder.id);
+    await NotificationService.cancelReminder(reminder.id);
+    _loadReminders();
+  }
+
+  Future<void> _goToNewReminder() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ReminderSettingScreen()),
+    );
+    if (result == true) _loadReminders();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +52,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       backgroundColor: AppColors.surface,
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(),
-      body: _buildBody(),
+      body: _loading ? _buildLoading() : _buildBody(),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -46,8 +75,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
           leading: Padding(
             padding: const EdgeInsets.only(left: 16),
             child: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded,
-                  color: AppColors.primary),
+              icon: const Icon(Icons.menu_rounded, color: AppColors.primary),
               onPressed: () {},
             ),
           ),
@@ -56,7 +84,40 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     );
   }
 
+  Widget _buildLoading() {
+    return const Center(
+      child: CircularProgressIndicator(color: AppColors.primary),
+    );
+  }
+
   Widget _buildBody() {
+    return _reminders.isEmpty ? _buildEmptyFull() : _buildList();
+  }
+
+  Widget _buildEmptyFull() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('NO REMINDERS',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 64,
+                fontWeight: FontWeight.w900,
+                color: AppColors.surfaceContainerHighest,
+              )),
+          const SizedBox(height: 8),
+          Text("Tap NEW to create your first reminder",
+              style: GoogleFonts.manrope(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.onSurfaceVariant,
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildList() {
     return SingleChildScrollView(
       padding: const EdgeInsets.only(
           top: 100, left: 24, right: 24, bottom: 120),
@@ -65,11 +126,14 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         children: [
           _buildHeader(),
           const SizedBox(height: 32),
-          _buildPriorityCard(_reminders[0]),
-          const SizedBox(height: 16),
-          _buildTwoColumnCards(),
-          const SizedBox(height: 16),
-          _buildSimpleCard(_reminders[3]),
+          ..._reminders.asMap().entries.map((entry) {
+            final index = entry.key;
+            final reminder = entry.value;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildReminderCard(reminder, index),
+            );
+          }),
           const SizedBox(height: 48),
           _buildEmptyState(),
         ],
@@ -95,8 +159,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         Row(
           children: [
             Container(
-              width: 8,
-              height: 8,
+              width: 8, height: 8,
               decoration: const BoxDecoration(
                 color: AppColors.tertiary,
                 shape: BoxShape.circle,
@@ -104,7 +167,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
             ),
             const SizedBox(width: 8),
             Text(
-              '$_remaining items remaining for today',
+              '${_reminders.length} reminder${_reminders.length == 1 ? '' : 's'} saved',
               style: GoogleFonts.manrope(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -117,192 +180,121 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     );
   }
 
-  Widget _buildPriorityCard(Reminder reminder) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.04),
-            blurRadius: 30,
-            offset: const Offset(0, 8),
-          ),
-        ],
+  Widget _buildReminderCard(Reminder reminder, int index) {
+    return Dismissible(
+      key: Key(reminder.id),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) => _deleteReminder(reminder),
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 24),
+        decoration: BoxDecoration(
+          color: Colors.red.shade100,
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: const Icon(Icons.delete_outline_rounded,
+            color: Colors.red, size: 28),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.secondaryContainer,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'HIGH PRIORITY',
-                  style: GoogleFonts.manrope(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.onSecondaryContainer,
-                    letterSpacing: 1.5,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.04),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48, height: 48,
+              decoration: BoxDecoration(
+                color: _repeatColor(reminder.repeatType).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(_repeatIcon(reminder.repeatType),
+                  color: _repeatColor(reminder.repeatType), size: 22),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    reminder.title,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSurface,
+                    ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    reminder.subtitleText,
+                    style: GoogleFonts.manrope(
+                      fontSize: 11,
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _repeatColor(reminder.repeatType).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                reminder.repeatLabel,
+                style: GoogleFonts.manrope(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  color: _repeatColor(reminder.repeatType),
+                  letterSpacing: 1,
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  color: AppColors.tertiary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            reminder.title,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
-              height: 1.3,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            reminder.subtitle ?? '',
-            style: GoogleFonts.manrope(
-              fontSize: 13,
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05);
+    ).animate().fadeIn(delay: Duration(milliseconds: 100 * index))
+        .slideY(begin: 0.05);
   }
 
-  Widget _buildTwoColumnCards() {
-    return Row(
-      children: [
-        Expanded(
-            child: _buildSmallCard(
-                _reminders[1], AppColors.surfaceContainerLow)),
-        const SizedBox(width: 12),
-        Expanded(
-            child: _buildSmallCard(
-                _reminders[2], AppColors.surfaceContainerHighest)),
-      ],
-    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05);
+  Color _repeatColor(RepeatType type) {
+    switch (type) {
+      case RepeatType.once:
+        return AppColors.tertiary;
+      case RepeatType.daily:
+        return AppColors.primary;
+      case RepeatType.weekly:
+        return const Color(0xFF4CAF50);
+      case RepeatType.monthly:
+        return const Color(0xFFFF9800);
+      case RepeatType.yearly:
+        return const Color(0xFFE91E63);
+    }
   }
 
-  Widget _buildSmallCard(Reminder reminder, Color bgColor) {
-    return Container(
-      height: 160,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            reminder.title,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
-              height: 1.3,
-            ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  reminder.tag ?? '',
-                  style: GoogleFonts.manrope(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-              Icon(Icons.edit_rounded,
-                  size: 18,
-                  color: AppColors.onSurfaceVariant.withOpacity(0.5)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSimpleCard(Reminder reminder) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(24),
-        border:
-            Border.all(color: AppColors.primary.withOpacity(0.05)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              border: Border.all(
-                  color: AppColors.outlineVariant, width: 2),
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  reminder.title,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.onSurface,
-                  ),
-                ),
-                Text(
-                  reminder.subtitle ?? '',
-                  style: GoogleFonts.manrope(
-                    fontSize: 12,
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.edit_rounded,
-              size: 18,
-              color: AppColors.onSurfaceVariant.withOpacity(0.4)),
-        ],
-      ),
-    ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.05);
+  IconData _repeatIcon(RepeatType type) {
+    switch (type) {
+      case RepeatType.once:
+        return Icons.looks_one_rounded;
+      case RepeatType.daily:
+        return Icons.repeat_rounded;
+      case RepeatType.weekly:
+        return Icons.view_week_rounded;
+      case RepeatType.monthly:
+        return Icons.calendar_month_rounded;
+      case RepeatType.yearly:
+        return Icons.auto_awesome_rounded;
+    }
   }
 
   Widget _buildEmptyState() {
@@ -318,23 +310,19 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       ),
       child: Column(
         children: [
-          Text(
-            'FIN',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 64,
-              fontWeight: FontWeight.w900,
-              color: AppColors.surfaceContainerHighest,
-            ),
-          ),
+          Text('FIN',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 64,
+                fontWeight: FontWeight.w900,
+                color: AppColors.surfaceContainerHighest,
+              )),
           const SizedBox(height: 8),
-          Text(
-            "That's everything for now.",
-            style: GoogleFonts.manrope(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
+          Text("That's everything for now.",
+              style: GoogleFonts.manrope(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.onSurfaceVariant,
+              )),
         ],
       ),
     ).animate().fadeIn(delay: 600.ms);
@@ -360,18 +348,11 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const ReminderSettingScreen()),
-            ),
+            onTap: _goToNewReminder,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [
-                    AppColors.primary,
-                    AppColors.primaryContainer
-                  ],
+                  colors: [AppColors.primary, AppColors.primaryContainer],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -393,15 +374,13 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                     const Icon(Icons.add_rounded,
                         color: AppColors.onPrimary, size: 20),
                     const SizedBox(width: 8),
-                    Text(
-                      'NEW',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.onPrimary,
-                        letterSpacing: 2,
-                      ),
-                    ),
+                    Text('NEW',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.onPrimary,
+                          letterSpacing: 2,
+                        )),
                   ],
                 ),
               ),
