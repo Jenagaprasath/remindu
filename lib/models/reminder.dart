@@ -45,7 +45,7 @@ class Reminder {
     final timeStr = '$hour:$minute $period';
     final dateStr =
         '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year}';
-    return '$timeStr • $dateStr • $repeatLabel';
+    return '$timeStr  •  $dateStr';
   }
 
   Map<String, dynamic> toJson() => {
