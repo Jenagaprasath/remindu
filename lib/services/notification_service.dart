@@ -14,10 +14,11 @@ class NotificationService {
 
     await _plugin.initialize(settings);
 
-    await _plugin
+    final androidPlugin = _plugin
         .resolvePlatformSpecificImplementation
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
+            AndroidFlutterLocalNotificationsPlugin>();
+
+    await androidPlugin?.requestNotificationsPermission();
   }
 
   static Future<void> scheduleReminder(Reminder reminder) async {
@@ -25,8 +26,7 @@ class NotificationService {
 
     if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
 
-    AndroidNotificationDetails androidDetails =
-        const AndroidNotificationDetails(
+    const androidDetails = AndroidNotificationDetails(
       'remindu_channel',
       'Remindu Reminders',
       channelDescription: 'Your curated reminders',
@@ -35,8 +35,7 @@ class NotificationService {
       playSound: true,
     );
 
-    NotificationDetails details =
-        NotificationDetails(android: androidDetails);
+    const details = NotificationDetails(android: androidDetails);
 
     final id = reminder.id.hashCode.abs() % 2147483647;
 
