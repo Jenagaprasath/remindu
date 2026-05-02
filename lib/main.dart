@@ -15,8 +15,17 @@ void main() async {
     ),
   );
 
-  await NotificationService.init();
-  await StorageService.deleteExpiredOnceReminders();
+  try {
+    await NotificationService.init();
+  } catch (e) {
+    // silent fail
+  }
+
+  try {
+    await StorageService.deleteExpiredOnceReminders();
+  } catch (e) {
+    // silent fail
+  }
 
   runApp(const ReminduApp());
 }
