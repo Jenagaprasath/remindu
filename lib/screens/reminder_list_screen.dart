@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
@@ -17,6 +18,9 @@ class ReminderListScreen extends StatefulWidget {
 class _ReminderListScreenState extends State<ReminderListScreen> {
   List<Reminder> _reminders = [];
   bool _loading = true;
+  final Set<String> _selectedIds = {};
+
+  bool get _isSelecting => _selectedIds.isNotEmpty;
 
   @override
   void initState() {
@@ -38,6 +42,38 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     _loadReminders();
   }
 
+  Future<void> _deleteSelected() async {
+    for (final id in _selectedIds) {
+      await StorageService.deleteReminder(id);
+      await NotificationService.cancelReminder(id);
+    }
+    setState(() => _selectedIds.clear());
+    _loadReminders();
+  }
+
+  void _onLongPress(Reminder reminder) {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _selectedIds.add(reminder.id);
+    });
+  }
+
+  void _onTap(Reminder reminder) {
+    if (_isSelecting) {
+      setState(() {
+        if (_selectedIds.contains(reminder.id)) {
+          _selectedIds.remove(reminder.id);
+        } else {
+          _selectedIds.add(reminder.id);
+        }
+      });
+    }
+  }
+
+  void _clearSelection() {
+    setState(() => _selectedIds.clear());
+  }
+
   Future<void> _goToNewReminder() async {
     final result = await Navigator.push(
       context,
@@ -53,7 +89,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(),
       body: _loading ? _buildLoading() : _buildBody(),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: _isSelecting ? _buildDeleteBar() : _buildBottomNav(),
     );
   }
 
@@ -72,13 +108,33 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         ),
         child: AppBar(
           backgroundColor: Colors.transparent,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: IconButton(
-              icon: const Icon(Icons.menu_rounded, color: AppColors.primary),
-              onPressed: () {},
-            ),
-          ),
+          leading: _isSelecting
+              ? Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: IconButton(
+                    icon: const Icon(Icons.close_rounded,
+                        color: AppColors.primary),
+                    onPressed: _clearSelection,
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: IconButton(
+                    icon: const Icon(Icons.menu_rounded,
+                        color: AppColors.primary),
+                    onPressed: () {},
+                  ),
+                ),
+          title: _isSelecting
+              ? Text(
+                  '${_selectedIds.length} selected',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                )
+              : null,
         ),
       ),
     );
@@ -99,19 +155,23 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('NO REMINDERS',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 64,
-                fontWeight: FontWeight.w900,
-                color: AppColors.surfaceContainerHighest,
-              )),
+          Text(
+            'NO REMINDERS',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 48,
+              fontWeight: FontWeight.w900,
+              color: AppColors.surfaceContainerHighest,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text("Tap NEW to create your first reminder",
-              style: GoogleFonts.manrope(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.onSurfaceVariant,
-              )),
+          Text(
+            "Tap NEW to create your first reminder",
+            style: GoogleFonts.manrope(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );
@@ -159,7 +219,8 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         Row(
           children: [
             Container(
-              width: 8, height: 8,
+              width: 8,
+              height: 8,
               decoration: const BoxDecoration(
                 color: AppColors.tertiary,
                 shape: BoxShape.circle,
@@ -181,28 +242,25 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
   }
 
   Widget _buildReminderCard(Reminder reminder, int index) {
-    return Dismissible(
-      key: Key(reminder.id),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => _deleteReminder(reminder),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        decoration: BoxDecoration(
-          color: Colors.red.shade100,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        child: const Icon(Icons.delete_outline_rounded,
-            color: Colors.red, size: 28),
-      ),
-      child: Container(
+    final isSelected = _selectedIds.contains(reminder.id);
+
+    return GestureDetector(
+      onLongPress: () => _onLongPress(reminder),
+      onTap: () => _onTap(reminder),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLowest,
+          color: isSelected
+              ? AppColors.primaryContainer.withOpacity(0.4)
+              : AppColors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(28),
+          border: isSelected
+              ? Border.all(color: AppColors.primary, width: 2)
+              : Border.all(color: Colors.transparent, width: 2),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.04),
+              color: AppColors.primary.withOpacity(isSelected ? 0.08 : 0.04),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -210,14 +268,36 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         ),
         child: Row(
           children: [
-            Container(
-              width: 48, height: 48,
-              decoration: BoxDecoration(
-                color: _repeatColor(reminder.repeatType).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(_repeatIcon(reminder.repeatType),
-                  color: _repeatColor(reminder.repeatType), size: 22),
+            // Selection circle or icon
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: isSelected
+                  ? Container(
+                      key: const ValueKey('selected'),
+                      width: 48,
+                      height: 48,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check_rounded,
+                          color: AppColors.onPrimary, size: 22),
+                    )
+                  : Container(
+                      key: const ValueKey('icon'),
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: _repeatColor(reminder.repeatType)
+                            .withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        _repeatIcon(reminder.repeatType),
+                        color: _repeatColor(reminder.repeatType),
+                        size: 22,
+                      ),
+                    ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -310,22 +390,105 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       ),
       child: Column(
         children: [
-          Text('FIN',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 64,
-                fontWeight: FontWeight.w900,
-                color: AppColors.surfaceContainerHighest,
-              )),
+          Text(
+            'FIN',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 64,
+              fontWeight: FontWeight.w900,
+              color: AppColors.surfaceContainerHighest,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text("That's everything for now.",
-              style: GoogleFonts.manrope(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.onSurfaceVariant,
-              )),
+          Text(
+            "That's everything for now.",
+            style: GoogleFonts.manrope(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     ).animate().fadeIn(delay: 600.ms);
+  }
+
+  Widget _buildDeleteBar() {
+    return Container(
+      padding: const EdgeInsets.only(
+          left: 24, right: 24, bottom: 28, top: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withOpacity(0.7),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: _clearSelection,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: const StadiumBorder(),
+                side: BorderSide(
+                    color: AppColors.outlineVariant.withOpacity(0.3)),
+              ),
+              child: Text(
+                'CANCEL',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.onSurface,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.red.shade400,
+                borderRadius: BorderRadius.circular(100),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: _deleteSelected,
+                icon: const Icon(Icons.delete_outline_rounded,
+                    color: Colors.white, size: 20),
+                label: Text(
+                  'DELETE ${_selectedIds.length}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 1,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: const StadiumBorder(),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBottomNav() {
@@ -374,13 +537,15 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                     const Icon(Icons.add_rounded,
                         color: AppColors.onPrimary, size: 20),
                     const SizedBox(width: 8),
-                    Text('NEW',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.onPrimary,
-                          letterSpacing: 2,
-                        )),
+                    Text(
+                      'NEW',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.onPrimary,
+                        letterSpacing: 2,
+                      ),
+                    ),
                   ],
                 ),
               ),
