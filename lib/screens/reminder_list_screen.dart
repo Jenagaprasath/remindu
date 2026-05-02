@@ -89,7 +89,8 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(),
       body: _loading ? _buildLoading() : _buildBody(),
-      bottomNavigationBar: _isSelecting ? _buildDeleteBar() : _buildBottomNav(),
+      bottomNavigationBar:
+          _isSelecting ? _buildDeleteBar() : _buildBottomNav(),
     );
   }
 
@@ -155,11 +156,17 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Icon(
+            Icons.notifications_none_rounded,
+            size: 64,
+            color: AppColors.surfaceContainerHighest,
+          ),
+          const SizedBox(height: 16),
           Text(
-            'NO REMINDERS',
+            'No Reminders Yet',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 48,
-              fontWeight: FontWeight.w900,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
               color: AppColors.surfaceContainerHighest,
             ),
           ),
@@ -260,7 +267,8 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
               : Border.all(color: Colors.transparent, width: 2),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(isSelected ? 0.08 : 0.04),
+              color:
+                  AppColors.primary.withOpacity(isSelected ? 0.08 : 0.04),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -268,7 +276,6 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         ),
         child: Row(
           children: [
-            // Selection circle or icon
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: isSelected
@@ -324,8 +331,8 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 8, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: _repeatColor(reminder.repeatType).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
@@ -343,7 +350,9 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
           ],
         ),
       ),
-    ).animate().fadeIn(delay: Duration(milliseconds: 100 * index))
+    )
+        .animate()
+        .fadeIn(delay: Duration(milliseconds: 100 * index))
         .slideY(begin: 0.05);
   }
 
@@ -418,7 +427,8 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
           left: 24, right: 24, bottom: 28, top: 12),
       decoration: BoxDecoration(
         color: AppColors.surface.withOpacity(0.7),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withOpacity(0.05),
