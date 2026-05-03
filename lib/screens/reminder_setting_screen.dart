@@ -8,17 +8,39 @@ import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 
 class ReminderSettingScreen extends StatefulWidget {
-  const ReminderSettingScreen({super.key});
+  final Reminder? existingReminder;
+
+  const ReminderSettingScreen({super.key, this.existingReminder});
 
   @override
   State<ReminderSettingScreen> createState() => _ReminderSettingScreenState();
 }
 
 class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
-  final TextEditingController _controller = TextEditingController();
-  DateTime _selectedDate = DateTime.now();
-  TimeOfDay _selectedTime = const TimeOfDay(hour: 9, minute: 0);
-  RepeatType _selectedRepeat = RepeatType.once;
+  late TextEditingController _controller;
+  late DateTime _selectedDate;
+  late TimeOfDay _selectedTime;
+  late RepeatType _selectedRepeat;
+
+  bool get _isEditing => widget.existingReminder != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final r = widget.existingReminder;
+    _controller = TextEditingController(text: r?.title ?? '');
+    _selectedDate = r?.dateTime ?? DateTime.now();
+    _selectedTime = r != null
+        ? TimeOfDay(hour: r.dateTime.hour, minute: r.dateTime.minute)
+        : const TimeOfDay(hour: 9, minute: 0);
+    _selectedRepeat = r?.repeatType ?? RepeatType.once;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   String get _formattedDate {
     final months = [
@@ -181,8 +203,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
               style: GoogleFonts.manrope(fontWeight: FontWeight.w600)),
           backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16)),
         ),
       );
       return;
@@ -196,15 +218,39 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
       _selectedTime.minute,
     );
 
-    final reminder = Reminder(
-      id: const Uuid().v4(),
-      title: _controller.text.trim(),
-      dateTime: scheduledDateTime,
-      repeatType: _selectedRepeat,
-    );
+    if (_isEditing) {
+      // Delete old notification
+      await NotificationService.cancelReminder(
+          widget.existingReminder!.id);
 
-    await StorageService.addReminder(reminder);
-    await NotificationService.scheduleReminder(reminder);
+      // Update reminder with same ID
+      final updated = Reminder(
+        id: widget.existingReminder!.id,
+        title: _controller.text.trim(),
+        dateTime: scheduledDateTime,
+        repeatType: _selectedRepeat,
+      );
+
+      final reminders = await StorageService.loadReminders();
+      final index =
+          reminders.indexWhere((r) => r.id == widget.existingReminder!.id);
+      if (index != -1) {
+        reminders[index] = updated;
+        await StorageService.saveReminders(reminders);
+      }
+
+      await NotificationService.scheduleReminder(updated);
+    } else {
+      // New reminder
+      final reminder = Reminder(
+        id: const Uuid().v4(),
+        title: _controller.text.trim(),
+        dateTime: scheduledDateTime,
+        repeatType: _selectedRepeat,
+      );
+      await StorageService.addReminder(reminder);
+      await NotificationService.scheduleReminder(reminder);
+    }
 
     if (mounted) Navigator.pop(context, true);
   }
@@ -274,7 +320,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
 
   Widget _buildEditorialHeader() {
     return Text(
-      'New Reminder',
+      _isEditing ? 'Edit Reminder' : 'New Reminder',
       style: GoogleFonts.plusJakartaSans(
         fontSize: 36,
         fontWeight: FontWeight.w800,
@@ -667,13 +713,15 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
                   shadowColor: Colors.transparent,
                   shape: const StadiumBorder(),
                 ),
-                child: Text('SAVE',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.onPrimary,
-                      letterSpacing: 2,
-                    )),
+                child: Text(
+                  _isEditing ? 'UPDATE' : 'SAVE',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.onPrimary,
+                    letterSpacing: 2,
+                  ),
+                ),
               ),
             ),
           ),
