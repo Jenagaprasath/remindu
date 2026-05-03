@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'services/notification_service.dart';
-import 'services/storage_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/reminder_list_screen.dart';
 
@@ -17,12 +16,6 @@ void main() async {
 
   try {
     await NotificationService.init();
-  } catch (e) {
-    // silent fail
-  }
-
-  try {
-    await StorageService.deleteExpiredOnceReminders();
   } catch (e) {
     // silent fail
   }

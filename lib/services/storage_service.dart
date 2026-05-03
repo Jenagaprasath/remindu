@@ -6,17 +6,37 @@ class StorageService {
   static const _key = 'remindu_reminders';
 
   static Future<List<Reminder>> loadReminders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonStr = prefs.getString(_key);
-    if (jsonStr == null) return [];
-    final List<dynamic> jsonList = jsonDecode(jsonStr);
-    return jsonList.map((e) => Reminder.fromJson(e)).toList();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload();
+      final jsonStr = prefs.getString(_key);
+      if (jsonStr == null || jsonStr.isEmpty) return [];
+      final List<dynamic> jsonList = jsonDecode(jsonStr);
+      final reminders = jsonList
+          .map((e) {
+            try {
+              return Reminder.fromJson(e);
+            } catch (_) {
+              return null;
+            }
+          })
+          .whereType<Reminder>()
+          .toList();
+      return reminders;
+    } catch (e) {
+      return [];
+    }
   }
 
   static Future<void> saveReminders(List<Reminder> reminders) async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonStr = jsonEncode(reminders.map((e) => e.toJson()).toList());
-    await prefs.setString(_key, jsonStr);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr =
+          jsonEncode(reminders.map((e) => e.toJson()).toList());
+      await prefs.setString(_key, jsonStr);
+    } catch (e) {
+      // silent fail
+    }
   }
 
   static Future<void> addReminder(Reminder reminder) async {
@@ -32,10 +52,15 @@ class StorageService {
   }
 
   static Future<void> deleteExpiredOnceReminders() async {
-    final reminders = await loadReminders();
-    final now = DateTime.now();
-    reminders.removeWhere((r) =>
-        r.repeatType == RepeatType.once && r.dateTime.isBefore(now));
-    await saveReminders(reminders);
+    try {
+      final reminders = await loadReminders();
+      final now = DateTime.now();
+      reminders.removeWhere((r) =>
+          r.repeatType == RepeatType.once &&
+          r.dateTime.isBefore(now));
+      await saveReminders(reminders);
+    } catch (e) {
+      // silent fail
+    }
   }
 }
