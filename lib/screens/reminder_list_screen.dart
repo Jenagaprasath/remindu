@@ -36,12 +36,6 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     });
   }
 
-  Future<void> _deleteReminder(Reminder reminder) async {
-    await StorageService.deleteReminder(reminder.id);
-    await NotificationService.cancelReminder(reminder.id);
-    _loadReminders();
-  }
-
   Future<void> _deleteSelected() async {
     for (final id in _selectedIds) {
       await StorageService.deleteReminder(id);
@@ -53,12 +47,10 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
 
   void _onLongPress(Reminder reminder) {
     HapticFeedback.mediumImpact();
-    setState(() {
-      _selectedIds.add(reminder.id);
-    });
+    setState(() => _selectedIds.add(reminder.id));
   }
 
-  void _onTap(Reminder reminder) {
+  void _onTap(Reminder reminder) async {
     if (_isSelecting) {
       setState(() {
         if (_selectedIds.contains(reminder.id)) {
@@ -67,6 +59,15 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
           _selectedIds.add(reminder.id);
         }
       });
+    } else {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              ReminderSettingScreen(existingReminder: reminder),
+        ),
+      );
+      if (result == true) _loadReminders();
     }
   }
 
@@ -156,7 +157,7 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.notifications_none_rounded,
             size: 64,
             color: AppColors.surfaceContainerHighest,
@@ -267,8 +268,8 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
               : Border.all(color: Colors.transparent, width: 2),
           boxShadow: [
             BoxShadow(
-              color:
-                  AppColors.primary.withOpacity(isSelected ? 0.08 : 0.04),
+              color: AppColors.primary
+                  .withOpacity(isSelected ? 0.08 : 0.04),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
@@ -331,10 +332,11 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
               ),
             ),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _repeatColor(reminder.repeatType).withOpacity(0.1),
+                color:
+                    _repeatColor(reminder.repeatType).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

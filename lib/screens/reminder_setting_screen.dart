@@ -219,11 +219,9 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
     );
 
     if (_isEditing) {
-      // Delete old notification
       await NotificationService.cancelReminder(
           widget.existingReminder!.id);
 
-      // Update reminder with same ID
       final updated = Reminder(
         id: widget.existingReminder!.id,
         title: _controller.text.trim(),
@@ -232,8 +230,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
       );
 
       final reminders = await StorageService.loadReminders();
-      final index =
-          reminders.indexWhere((r) => r.id == widget.existingReminder!.id);
+      final index = reminders
+          .indexWhere((r) => r.id == widget.existingReminder!.id);
       if (index != -1) {
         reminders[index] = updated;
         await StorageService.saveReminders(reminders);
@@ -241,7 +239,6 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
 
       await NotificationService.scheduleReminder(updated);
     } else {
-      // New reminder
       final reminder = Reminder(
         id: const Uuid().v4(),
         title: _controller.text.trim(),
