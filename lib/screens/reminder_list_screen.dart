@@ -19,13 +19,30 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
   List<Reminder> _reminders = [];
   bool _loading = true;
   final Set<String> _selectedIds = {};
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   bool get _isSelecting => _selectedIds.isNotEmpty;
+
+  List<Reminder> get _filteredReminders {
+    if (_searchQuery.isEmpty) return _reminders;
+    return _reminders
+        .where((r) =>
+            r.title.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+  }
 
   @override
   void initState() {
     super.initState();
     _loadReminders();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadReminders() async {
@@ -75,6 +92,16 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     setState(() => _selectedIds.clear());
   }
 
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchQuery = '';
+        _searchController.clear();
+      }
+    });
+  }
+
   Future<void> _goToNewReminder() async {
     final result = await Navigator.push(
       context,
@@ -119,14 +146,23 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                     onPressed: _clearSelection,
                   ),
                 )
-              : Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: IconButton(
-                    icon: const Icon(Icons.menu_rounded,
-                        color: AppColors.primary),
-                    onPressed: () {},
-                  ),
-                ),
+              : _isSearching
+                  ? Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back_rounded,
+                            color: AppColors.primary),
+                        onPressed: _toggleSearch,
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: IconButton(
+                        icon: const Icon(Icons.menu_rounded,
+                            color: AppColors.primary),
+                        onPressed: () {},
+                      ),
+                    ),
           title: _isSelecting
               ? Text(
                   '${_selectedIds.length} selected',
@@ -136,7 +172,44 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
                     color: AppColors.primary,
                   ),
                 )
-              : null,
+              : _isSearching
+                  ? TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      onChanged: (val) =>
+                          setState(() => _searchQuery = val),
+                      style: GoogleFonts.manrope(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.onSurface,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Search reminders...',
+                        hintStyle: GoogleFonts.manrope(
+                          fontSize: 16,
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                      ),
+                    )
+                  : null,
+          actions: [
+            if (!_isSelecting)
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: IconButton(
+                  icon: Icon(
+                    _isSearching
+                        ? Icons.close_rounded
+                        : Icons.search_rounded,
+                    color: AppColors.primary,
+                  ),
+                  onPressed: _toggleSearch,
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -149,7 +222,11 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
   }
 
   Widget _buildBody() {
-    return _reminders.isEmpty ? _buildEmptyFull() : _buildList();
+    if (_reminders.isEmpty) return _buildEmptyFull();
+    if (_isSearching && _filteredReminders.isEmpty) {
+      return _buildNoResults();
+    }
+    return _buildList();
   }
 
   Widget _buildEmptyFull() {
@@ -185,16 +262,51 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
     );
   }
 
+  Widget _buildNoResults() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.search_off_rounded,
+            size: 64,
+            color: AppColors.surfaceContainerHighest,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No Results',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: AppColors.surfaceContainerHighest,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'No reminders match "$_searchQuery"',
+            style: GoogleFonts.manrope(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildList() {
+    final reminders = _filteredReminders;
     return SingleChildScrollView(
       padding: const EdgeInsets.only(
           top: 100, left: 24, right: 24, bottom: 120),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(),
+          if (!_isSearching) _buildHeader(),
+          if (_isSearching) _buildSearchHeader(),
           const SizedBox(height: 32),
-          ..._reminders.asMap().entries.map((entry) {
+          ...reminders.asMap().entries.map((entry) {
             final index = entry.key;
             final reminder = entry.value;
             return Padding(
@@ -202,8 +314,10 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
               child: _buildReminderCard(reminder, index),
             );
           }),
-          const SizedBox(height: 48),
-          _buildEmptyState(),
+          if (!_isSearching) ...[
+            const SizedBox(height: 48),
+            _buildEmptyState(),
+          ],
         ],
       ),
     );
@@ -247,6 +361,34 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
         ).animate().fadeIn(delay: 200.ms),
       ],
     );
+  }
+
+  Widget _buildSearchHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Search',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 36,
+            fontWeight: FontWeight.w800,
+            color: AppColors.primary,
+            letterSpacing: -1,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _searchQuery.isEmpty
+              ? 'Type to search your reminders'
+              : '${_filteredReminders.length} result${_filteredReminders.length == 1 ? '' : 's'} for "$_searchQuery"',
+          style: GoogleFonts.manrope(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: AppColors.onSurfaceVariant,
+          ),
+        ),
+      ],
+    ).animate().fadeIn(duration: 300.ms);
   }
 
   Widget _buildReminderCard(Reminder reminder, int index) {
@@ -312,14 +454,16 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    reminder.title,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
-                    ),
-                  ),
+                  _isSearching && _searchQuery.isNotEmpty
+                      ? _buildHighlightedText(reminder.title)
+                      : Text(
+                          reminder.title,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.onSurface,
+                          ),
+                        ),
                   const SizedBox(height: 4),
                   Text(
                     reminder.subtitleText,
@@ -335,8 +479,8 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
               padding: const EdgeInsets.symmetric(
                   horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color:
-                    _repeatColor(reminder.repeatType).withOpacity(0.1),
+                color: _repeatColor(reminder.repeatType)
+                    .withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -354,8 +498,56 @@ class _ReminderListScreenState extends State<ReminderListScreen> {
       ),
     )
         .animate()
-        .fadeIn(delay: Duration(milliseconds: 100 * index))
+        .fadeIn(delay: Duration(milliseconds: 50 * index))
         .slideY(begin: 0.05);
+  }
+
+  Widget _buildHighlightedText(String text) {
+    final query = _searchQuery.toLowerCase();
+    final lowerText = text.toLowerCase();
+    final start = lowerText.indexOf(query);
+    if (start == -1) {
+      return Text(
+        text,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          color: AppColors.onSurface,
+        ),
+      );
+    }
+    final end = start + query.length;
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: text.substring(0, start),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.onSurface,
+            ),
+          ),
+          TextSpan(
+            text: text.substring(start, end),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+              backgroundColor: AppColors.primaryContainer.withOpacity(0.4),
+            ),
+          ),
+          TextSpan(
+            text: text.substring(end),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Color _repeatColor(RepeatType type) {
