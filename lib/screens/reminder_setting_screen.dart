@@ -229,14 +229,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
         repeatType: _selectedRepeat,
       );
 
-      final reminders = await StorageService.loadReminders();
-      final index = reminders
-          .indexWhere((r) => r.id == widget.existingReminder!.id);
-      if (index != -1) {
-        reminders[index] = updated;
-        await StorageService.saveReminders(reminders);
-      }
-
+      await StorageService.updateReminder(updated);
       await NotificationService.scheduleReminder(updated);
     } else {
       final reminder = Reminder(

@@ -53,16 +53,14 @@ class Reminder {
         'title': title,
         'dateTime': dateTime.toIso8601String(),
         'repeatType': repeatType.index,
-        'isCompleted': isCompleted,
+        'isCompleted': isCompleted ? 1 : 0,
       };
 
   factory Reminder.fromJson(Map<String, dynamic> json) => Reminder(
         id: json['id'],
         title: json['title'],
         dateTime: DateTime.parse(json['dateTime']),
-        repeatType: RepeatType.values[json['repeatType']],
-        isCompleted: json['isCompleted'] ?? false,
+        repeatType: RepeatType.values[json['repeatType'] as int],
+        isCompleted: (json['isCompleted'] as int?) == 1,
       );
 }
-
-

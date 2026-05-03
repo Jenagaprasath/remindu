@@ -11,7 +11,8 @@ dependencies:
     sdk: flutter
   google_fonts: ^6.1.0
   flutter_animate: ^4.5.0
-  shared_preferences: ^2.2.2
+  sqflite: ^2.3.2
+  path: ^1.9.0
   flutter_local_notifications: ^17.0.0
   timezone: ^0.9.2
   uuid: ^4.3.3
