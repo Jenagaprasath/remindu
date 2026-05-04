@@ -18,6 +18,7 @@ class ReminderSettingScreen extends StatefulWidget {
 
 class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
   late TextEditingController _controller;
+  late TextEditingController _notesController;
   late DateTime _selectedDate;
   late TimeOfDay _selectedTime;
   late RepeatType _selectedRepeat;
@@ -29,6 +30,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
     super.initState();
     final r = widget.existingReminder;
     _controller = TextEditingController(text: r?.title ?? '');
+    _notesController = TextEditingController(text: r?.notes ?? '');
     _selectedDate = r?.dateTime ?? DateTime.now();
     _selectedTime = r != null
         ? TimeOfDay(hour: r.dateTime.hour, minute: r.dateTime.minute)
@@ -39,6 +41,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -55,7 +58,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
         _selectedDate.month == DateTime.now().month &&
         _selectedDate.year == DateTime.now().year;
     if (isToday) return 'Today';
-    return '${days[_selectedDate.weekday - 1]}, ${months[_selectedDate.month - 1]} ${_selectedDate.day}';
+    return '${days[_selectedDate.weekday - 1]}, '
+        '${months[_selectedDate.month - 1]} ${_selectedDate.day}';
   }
 
   String get _formattedTime {
@@ -224,6 +228,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
       final updated = Reminder(
         id: widget.existingReminder!.id,
         title: _controller.text.trim(),
+        notes: _notesController.text.trim(),
         dateTime: scheduledDateTime,
         repeatType: _selectedRepeat,
       );
@@ -233,6 +238,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
       final reminder = Reminder(
         id: const Uuid().v4(),
         title: _controller.text.trim(),
+        notes: _notesController.text.trim(),
         dateTime: scheduledDateTime,
         repeatType: _selectedRepeat,
       );
@@ -293,6 +299,8 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           _buildEditorialHeader(),
           const SizedBox(height: 32),
           _buildTitleInput(),
+          const SizedBox(height: 24),
+          _buildNotesInput(),
           const SizedBox(height: 32),
           _buildRepeatSelector(),
           const SizedBox(height: 24),
@@ -342,7 +350,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
             focusedBorder: InputBorder.none,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Container(
           width: 80,
           height: 3,
@@ -353,6 +361,69 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
         ),
       ],
     ).animate().fadeIn(delay: 200.ms);
+  }
+
+  Widget _buildNotesInput() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.secondaryContainer,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.notes_rounded,
+                    color: AppColors.primary, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'NOTES',
+                style: GoogleFonts.manrope(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.onSurfaceVariant,
+                  letterSpacing: 2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _notesController,
+            maxLines: 4,
+            style: GoogleFonts.manrope(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.onSurface,
+              height: 1.6,
+            ),
+            decoration: InputDecoration(
+              hintText:
+                  'Add any extra details, context or instructions...',
+              hintStyle: GoogleFonts.manrope(
+                fontSize: 14,
+                color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                height: 1.6,
+              ),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.05);
   }
 
   Widget _buildRepeatSelector() {
@@ -428,7 +499,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           ),
         ),
       ],
-    ).animate().fadeIn(delay: 250.ms);
+    ).animate().fadeIn(delay: 300.ms);
   }
 
   Widget _buildDateCard() {
@@ -490,7 +561,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           ],
         ),
       ),
-    ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05);
+    ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.05);
   }
 
   Widget _buildTimeCard() {
@@ -568,7 +639,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           ],
         ),
       ),
-    ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.05);
+    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05);
   }
 
   Widget _buildMediaButton({
@@ -629,7 +700,6 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        // Row 1 — MIC + ADD AUDIO
         Row(
           children: [
             _buildMediaButton(
@@ -648,7 +718,6 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        // Row 2 — ADD IMAGE + ADD VIDEO
         Row(
           children: [
             _buildMediaButton(
@@ -667,7 +736,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           ],
         ),
       ],
-    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05);
+    ).animate().fadeIn(delay: 450.ms).slideY(begin: 0.05);
   }
 
   Widget _buildBottomBar() {

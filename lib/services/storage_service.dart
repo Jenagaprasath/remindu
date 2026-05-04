@@ -17,17 +17,24 @@ class StorageService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE reminders (
             id TEXT PRIMARY KEY,
             title TEXT NOT NULL,
+            notes TEXT,
             dateTime TEXT NOT NULL,
             repeatType INTEGER NOT NULL,
             isCompleted INTEGER NOT NULL DEFAULT 0
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute(
+              'ALTER TABLE reminders ADD COLUMN notes TEXT');
+        }
       },
     );
   }

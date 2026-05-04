@@ -3,6 +3,7 @@ enum RepeatType { once, daily, weekly, monthly, yearly }
 class Reminder {
   final String id;
   final String title;
+  final String? notes;
   final DateTime dateTime;
   final RepeatType repeatType;
   bool isCompleted;
@@ -10,6 +11,7 @@ class Reminder {
   Reminder({
     required this.id,
     required this.title,
+    this.notes,
     required this.dateTime,
     required this.repeatType,
     this.isCompleted = false,
@@ -51,6 +53,7 @@ class Reminder {
   Map<String, dynamic> toJson() => {
         'id': id,
         'title': title,
+        'notes': notes ?? '',
         'dateTime': dateTime.toIso8601String(),
         'repeatType': repeatType.index,
         'isCompleted': isCompleted ? 1 : 0,
@@ -59,6 +62,7 @@ class Reminder {
   factory Reminder.fromJson(Map<String, dynamic> json) => Reminder(
         id: json['id'],
         title: json['title'],
+        notes: json['notes'] as String?,
         dateTime: DateTime.parse(json['dateTime']),
         repeatType: RepeatType.values[json['repeatType'] as int],
         isCompleted: (json['isCompleted'] as int?) == 1,

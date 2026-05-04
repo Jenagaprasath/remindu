@@ -15,7 +15,6 @@ void main() async {
     ),
   );
 
-  // Init database on startup
   await StorageService.database;
 
   try {
