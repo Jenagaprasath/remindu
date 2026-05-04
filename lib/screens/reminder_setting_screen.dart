@@ -221,14 +221,12 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
     if (_isEditing) {
       await NotificationService.cancelReminder(
           widget.existingReminder!.id);
-
       final updated = Reminder(
         id: widget.existingReminder!.id,
         title: _controller.text.trim(),
         dateTime: scheduledDateTime,
         repeatType: _selectedRepeat,
       );
-
       await StorageService.updateReminder(updated);
       await NotificationService.scheduleReminder(updated);
     } else {
@@ -302,7 +300,7 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
           const SizedBox(height: 16),
           _buildTimeCard(),
           const SizedBox(height: 24),
-          _buildMicAudioButtons(),
+          _buildMediaButtons(),
         ],
       ),
     );
@@ -573,79 +571,100 @@ class _ReminderSettingScreenState extends State<ReminderSettingScreen> {
     ).animate().fadeIn(delay: 350.ms).slideY(begin: 0.05);
   }
 
-  Widget _buildMicAudioButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () {},
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(28),
+  Widget _buildMediaButton({
+    required IconData icon,
+    required String label,
+    required Color iconBg,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 26),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: const BoxDecoration(
-                      color: AppColors.secondaryContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.mic_rounded,
-                        color: AppColors.primary, size: 26),
-                  ),
-                  const SizedBox(height: 10),
-                  Text('MIC',
-                      style: GoogleFonts.manrope(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.onSurfaceVariant,
-                        letterSpacing: 1.5,
-                      )),
-                ],
+              const SizedBox(height: 10),
+              Text(
+                label,
+                style: GoogleFonts.manrope(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.onSurfaceVariant,
+                  letterSpacing: 1.5,
+                ),
               ),
-            ),
+            ],
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: GestureDetector(
-            onTap: () {},
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: const BoxDecoration(
-                      color: AppColors.secondaryContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.audio_file_rounded,
-                        color: AppColors.primary, size: 26),
-                  ),
-                  const SizedBox(height: 10),
-                  Text('ADD AUDIO',
-                      style: GoogleFonts.manrope(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.onSurfaceVariant,
-                        letterSpacing: 1.5,
-                      )),
-                ],
-              ),
-            ),
+      ),
+    );
+  }
+
+  Widget _buildMediaButtons() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ADD MEDIA',
+          style: GoogleFonts.manrope(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: AppColors.onSurfaceVariant,
+            letterSpacing: 2,
           ),
+        ),
+        const SizedBox(height: 12),
+        // Row 1 — MIC + ADD AUDIO
+        Row(
+          children: [
+            _buildMediaButton(
+              icon: Icons.mic_rounded,
+              label: 'MIC',
+              iconBg: AppColors.secondaryContainer,
+              onTap: () {},
+            ),
+            const SizedBox(width: 16),
+            _buildMediaButton(
+              icon: Icons.audio_file_rounded,
+              label: 'ADD AUDIO',
+              iconBg: AppColors.secondaryContainer,
+              onTap: () {},
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        // Row 2 — ADD IMAGE + ADD VIDEO
+        Row(
+          children: [
+            _buildMediaButton(
+              icon: Icons.image_rounded,
+              label: 'ADD IMAGE',
+              iconBg: AppColors.tertiaryContainer,
+              onTap: () {},
+            ),
+            const SizedBox(width: 16),
+            _buildMediaButton(
+              icon: Icons.videocam_rounded,
+              label: 'ADD VIDEO',
+              iconBg: AppColors.tertiaryContainer,
+              onTap: () {},
+            ),
+          ],
         ),
       ],
     ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05);
