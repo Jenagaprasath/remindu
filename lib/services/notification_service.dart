@@ -24,16 +24,21 @@ class NotificationService {
         onDidReceiveBackgroundNotificationResponse: _onNotificationTap,
       );
 
-      final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
-          _plugin.resolvePlatformSpecificImplementation
-              AndroidFlutterLocalNotificationsPlugin>();
-
-      if (androidPlugin != null) {
-        await androidPlugin.requestNotificationsPermission();
-        await androidPlugin.requestExactAlarmsPermission();
-      }
-
       await _createNotificationChannel();
+      await _requestPermissions();
+    } catch (e) {
+      // silent fail
+    }
+  }
+
+  static Future<void> _requestPermissions() async {
+    try {
+      final plugin = _plugin.resolvePlatformSpecificImplementation
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (plugin != null) {
+        await plugin.requestNotificationsPermission();
+        await plugin.requestExactAlarmsPermission();
+      }
     } catch (e) {
       // silent fail
     }
@@ -41,11 +46,9 @@ class NotificationService {
 
   static Future<void> _createNotificationChannel() async {
     try {
-      final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
-          _plugin.resolvePlatformSpecificImplementation
-              AndroidFlutterLocalNotificationsPlugin>();
-
-      if (androidPlugin != null) {
+      final plugin = _plugin.resolvePlatformSpecificImplementation
+          AndroidFlutterLocalNotificationsPlugin>();
+      if (plugin != null) {
         const AndroidNotificationChannel channel =
             AndroidNotificationChannel(
           'remindu_alarm_channel',
@@ -56,7 +59,7 @@ class NotificationService {
           enableVibration: true,
           showBadge: true,
         );
-        await androidPlugin.createNotificationChannel(channel);
+        await plugin.createNotificationChannel(channel);
       }
     } catch (e) {
       // silent fail
@@ -65,7 +68,7 @@ class NotificationService {
 
   @pragma('vm:entry-point')
   static void _onNotificationTap(NotificationResponse response) {
-    // Handled in main.dart
+    // handled in main.dart
   }
 
   static Future<void> scheduleReminder(Reminder reminder) async {
@@ -79,6 +82,11 @@ class NotificationService {
 
       final Int64List vibrationPattern =
           Int64List.fromList([0, 500, 200, 500]);
+
+      final String body =
+          reminder.notes != null && reminder.notes!.isNotEmpty
+              ? reminder.notes!
+              : 'Tap to view your reminder';
 
       final AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
@@ -96,9 +104,7 @@ class NotificationService {
         autoCancel: false,
         ongoing: false,
         styleInformation: BigTextStyleInformation(
-          reminder.notes != null && reminder.notes!.isNotEmpty
-              ? reminder.notes!
-              : 'Tap to view your reminder',
+          body,
           contentTitle: reminder.title,
           summaryText: reminder.repeatLabel,
         ),
@@ -107,16 +113,13 @@ class NotificationService {
       final NotificationDetails details =
           NotificationDetails(android: androidDetails);
 
-      final String body =
-          reminder.notes != null && reminder.notes!.isNotEmpty
-              ? reminder.notes!
-              : 'Tap to view your reminder';
+      final String title = '⏰ ${reminder.title}';
 
       switch (reminder.repeatType) {
         case RepeatType.once:
           await _plugin.zonedSchedule(
             id,
-            '⏰ ${reminder.title}',
+            title,
             body,
             scheduledDate,
             details,
@@ -130,7 +133,7 @@ class NotificationService {
         case RepeatType.daily:
           await _plugin.zonedSchedule(
             id,
-            '⏰ ${reminder.title}',
+            title,
             body,
             scheduledDate,
             details,
@@ -145,7 +148,7 @@ class NotificationService {
         case RepeatType.weekly:
           await _plugin.zonedSchedule(
             id,
-            '⏰ ${reminder.title}',
+            title,
             body,
             scheduledDate,
             details,
@@ -161,7 +164,7 @@ class NotificationService {
         case RepeatType.monthly:
           await _plugin.zonedSchedule(
             id,
-            '⏰ ${reminder.title}',
+            title,
             body,
             scheduledDate,
             details,
@@ -177,7 +180,7 @@ class NotificationService {
         case RepeatType.yearly:
           await _plugin.zonedSchedule(
             id,
-            '⏰ ${reminder.title}',
+            title,
             body,
             scheduledDate,
             details,
