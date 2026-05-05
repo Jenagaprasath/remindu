@@ -1,315 +1,299 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_theme.dart';
 
-class NotifyingScreen extends StatelessWidget {
-  const NotifyingScreen({super.key});
+class NotifyingScreen extends StatefulWidget {
+  final String title;
+  final String notes;
+
+  const NotifyingScreen({
+    super.key,
+    required this.title,
+    required this.notes,
+  });
+
+  @override
+  State<NotifyingScreen> createState() => _NotifyingScreenState();
+}
+
+class _NotifyingScreenState extends State<NotifyingScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Keep screen on
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    // Vibrate like alarm
+    _vibrateAlarm();
+  }
+
+  Future<void> _vibrateAlarm() async {
+    for (int i = 0; i < 3; i++) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      HapticFeedback.heavyImpact();
+      await Future.delayed(const Duration(milliseconds: 300));
+      HapticFeedback.heavyImpact();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    super.dispose();
+  }
+
+  void _dismiss() {
+    HapticFeedback.mediumImpact();
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: Stack(
-        children: [
-          _buildBackgroundDecor(),
-          _buildContent(context),
-          _buildBrandFooter(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBackgroundDecor() {
-    return Stack(
-      children: [
-        Positioned(
-          top: -50, right: -30,
-          child: Container(
-            width: 300, height: 300,
-            decoration: BoxDecoration(
-              color: AppColors.primaryContainer.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-        Positioned(
-          bottom: -60, left: -30,
-          child: Container(
-            width: 250, height: 250,
-            decoration: BoxDecoration(
-              color: AppColors.tertiaryContainer.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContent(BuildContext context) {
-    return SafeArea(
-      child: Center(
+      body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLowest.withOpacity(0.85),
-              borderRadius: BorderRadius.circular(40),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.08),
-                  blurRadius: 40,
-                ),
-              ],
-            ),
-            clipBehavior: Clip.hardEdge,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildImageHeader(context),
-                _buildTextContent(),
-                _buildActionFooter(context),
-              ],
-            ),
-          ).animate().fadeIn(duration: 500.ms).scale(begin: const Offset(0.97, 0.97)),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              _buildTopBar(),
+              Expanded(child: _buildContent()),
+              _buildActionButtons(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildImageHeader(BuildContext context) {
-    return Stack(
+  Widget _buildTopBar() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Container(
-          height: 220,
-          width: double.infinity,
-          color: AppColors.surfaceContainerHighest,
-          child: const Icon(Icons.wb_twilight_rounded,
-              size: 80, color: AppColors.outlineVariant),
-        ),
-        Positioned(
-          top: 0, bottom: 0, left: 0, right: 0,
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, AppColors.surfaceContainerLowest],
+          padding: const EdgeInsets.symmetric(
+              horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.primaryContainer.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: AppColors.tertiary,
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Text(
+                'REMINDER',
+                style: GoogleFonts.manrope(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
           ),
         ),
-        Positioned(
-          top: 16, left: 16,
-          child: GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              width: 40, height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.surface.withOpacity(0.4),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.chevron_left_rounded,
-                  color: AppColors.onSurfaceVariant),
-            ),
+        Text(
+          _currentTime(),
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.onSurfaceVariant,
           ),
         ),
-        Positioned(
-          top: 16, right: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      ],
+    ).animate().fadeIn(duration: 400.ms);
+  }
+
+  String _currentTime() {
+    final now = DateTime.now();
+    final hour = now.hour > 12
+        ? now.hour - 12
+        : now.hour == 0
+            ? 12
+            : now.hour;
+    final minute = now.minute.toString().padLeft(2, '0');
+    final period = now.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
+  Widget _buildContent() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Pulsing icon
+        AnimatedBuilder(
+          animation: _pulseController,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: 1.0 + (_pulseController.value * 0.1),
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryContainer
+                      .withOpacity(0.3 + _pulseController.value * 0.2),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(
+                          0.2 + _pulseController.value * 0.2),
+                      blurRadius: 40,
+                      spreadRadius: 10,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.notifications_active_rounded,
+                  color: AppColors.primary,
+                  size: 52,
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 48),
+
+        // Title
+        Text(
+          widget.title,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 32,
+            fontWeight: FontWeight.w800,
+            color: AppColors.onSurface,
+            height: 1.2,
+            letterSpacing: -0.5,
+          ),
+        ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
+
+        // Notes
+        if (widget.notes.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.surface.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(20),
+              color: AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(24),
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 8, height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.tertiary,
-                    shape: BoxShape.circle,
+                const Icon(Icons.notes_rounded,
+                    color: AppColors.primary, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    widget.notes,
+                    style: GoogleFonts.manrope(
+                      fontSize: 15,
+                      color: AppColors.onSurfaceVariant,
+                      height: 1.6,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 6),
-                Text('Happening Now', style: GoogleFonts.manrope(
-                  fontSize: 10, fontWeight: FontWeight.w700,
-                  color: AppColors.onSurfaceVariant, letterSpacing: 1.5,
-                )),
               ],
             ),
-          ),
-        ),
+          ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.1),
+        ],
       ],
     );
   }
 
-  Widget _buildTextContent() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 8, 28, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.push_pin_rounded, color: AppColors.primary, size: 16),
-              const SizedBox(width: 6),
-              Text('DAILY CURATION', style: GoogleFonts.manrope(
-                fontSize: 11, fontWeight: FontWeight.w800,
-                color: AppColors.primary, letterSpacing: 1.5,
-              )),
-            ],
-          ),
-          const SizedBox(height: 12),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Evening ',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 36, fontWeight: FontWeight.w800,
-                    color: AppColors.onSurface, height: 1.1,
-                  ),
-                ),
-                TextSpan(
-                  text: 'Reflection',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 36, fontWeight: FontWeight.w800,
-                    color: AppColors.tertiary, height: 1.1,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-                TextSpan(
-                  text: ' & Strategy Session',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 36, fontWeight: FontWeight.w800,
-                    color: AppColors.onSurface, height: 1.1,
-                  ),
+  Widget _buildActionButtons() {
+    return Column(
+      children: [
+        // DISMISS button
+        SizedBox(
+          width: double.infinity,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryContainer],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(100),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Time to pause and curate your thoughts for tomorrow. Gather your notes and find a quiet space.',
-            style: GoogleFonts.manrope(
-              fontSize: 14, color: AppColors.onSurfaceVariant, height: 1.6,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            children: [
-              _buildChip(Icons.schedule_rounded, '18:30 PM', AppColors.secondaryContainer),
-              _buildChip(Icons.location_on_outlined, 'Home Office', AppColors.surfaceContainerHigh),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChip(IconData icon, String label, Color bg) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppColors.onSurfaceVariant),
-          const SizedBox(width: 6),
-          Text(label, style: GoogleFonts.manrope(
-            fontSize: 11, fontWeight: FontWeight.w600,
-            color: AppColors.onSurfaceVariant,
-          )),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionFooter(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow.withOpacity(0.5),
-        border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.2)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+            child: ElevatedButton.icon(
+              onPressed: _dismiss,
+              icon: const Icon(Icons.check_rounded,
+                  color: AppColors.onPrimary, size: 22),
+              label: Text(
+                'DISMISS',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.onPrimary,
+                  letterSpacing: 2,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
                 shape: const StadiumBorder(),
               ),
-              child: Text('OK', style: GoogleFonts.manrope(
-                fontSize: 13, fontWeight: FontWeight.w800,
-                color: AppColors.onSurfaceVariant,
-              )),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, AppColors.primaryDim],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(100),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.notifications_paused_outlined,
-                    size: 18, color: AppColors.onPrimary),
-                label: Text('REMIND ME', style: GoogleFonts.manrope(
-                  fontSize: 12, fontWeight: FontWeight.w800,
-                  color: AppColors.onPrimary, letterSpacing: 1,
-                )),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: const StadiumBorder(),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBrandFooter() {
-    return Positioned(
-      bottom: 16,
-      left: 0, right: 0,
-      child: Center(
-        child: Opacity(
-          opacity: 0.3,
-          child: Text('remindu', style: GoogleFonts.plusJakartaSans(
-            fontSize: 18, fontWeight: FontWeight.w900,
-            fontStyle: FontStyle.italic,
-            color: AppColors.onSurface,
-          )),
         ),
-      ),
-    );
+        const SizedBox(height: 12),
+
+        // SNOOZE button
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              Navigator.pop(context);
+              // TODO: snooze for 10 mins
+            },
+            icon: const Icon(Icons.snooze_rounded,
+                color: AppColors.primary, size: 20),
+            label: Text(
+              'SNOOZE 10 MIN',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+                letterSpacing: 1,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: const StadiumBorder(),
+              side: BorderSide(
+                  color: AppColors.outlineVariant.withOpacity(0.3)),
+            ),
+          ),
+        ),
+      ],
+    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1);
   }
 }

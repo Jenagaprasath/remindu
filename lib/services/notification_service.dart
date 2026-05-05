@@ -10,14 +10,62 @@ class NotificationService {
   static Future<void> init() async {
     try {
       tz.initializeTimeZones();
+
       const AndroidInitializationSettings android =
           AndroidInitializationSettings('@mipmap/ic_launcher');
+
       const InitializationSettings settings =
           InitializationSettings(android: android);
-      await _plugin.initialize(settings);
+
+      await _plugin.initialize(
+        settings,
+        onDidReceiveNotificationResponse: _onNotificationTap,
+        onDidReceiveBackgroundNotificationResponse: _onNotificationTap,
+      );
+
+      final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
+          _plugin.resolvePlatformSpecificImplementation
+              AndroidFlutterLocalNotificationsPlugin>();
+
+      if (androidPlugin != null) {
+        await androidPlugin.requestNotificationsPermission();
+        await androidPlugin.requestExactAlarmsPermission();
+      }
+
+      // Create high priority notification channel
+      await _createNotificationChannel();
     } catch (e) {
-      // silent fail — don't crash app
+      // silent fail
     }
+  }
+
+  static Future<void> _createNotificationChannel() async {
+    try {
+      final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
+          _plugin.resolvePlatformSpecificImplementation
+              AndroidFlutterLocalNotificationsPlugin>();
+
+      if (androidPlugin != null) {
+        const AndroidNotificationChannel channel =
+            AndroidNotificationChannel(
+          'remindu_alarm_channel',
+          'Remindu Alarms',
+          description: 'Full screen alarm notifications for Remindu',
+          importance: Importance.max,
+          playSound: true,
+          enableVibration: true,
+          showBadge: true,
+        );
+        await androidPlugin.createNotificationChannel(channel);
+      }
+    } catch (e) {
+      // silent fail
+    }
+  }
+
+  @pragma('vm:entry-point')
+  static void _onNotificationTap(NotificationResponse response) {
+    // Handled in main.dart
   }
 
   static Future<void> scheduleReminder(Reminder reminder) async {
@@ -27,27 +75,44 @@ class NotificationService {
 
       if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
 
-      const AndroidNotificationDetails androidDetails =
+      final int id = reminder.id.hashCode.abs() % 2147483647;
+
+      // Full screen intent details
+      final AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
-        'remindu_channel',
-        'Remindu Reminders',
-        channelDescription: 'Your curated reminders',
+        'remindu_alarm_channel',
+        'Remindu Alarms',
+        channelDescription: 'Full screen alarm notifications',
         importance: Importance.max,
-        priority: Priority.high,
+        priority: Priority.max,
         playSound: true,
+        enableVibration: true,
+        vibrationPattern: Int64List.fromList([0, 500, 200, 500]),
+        fullScreenIntent: true,
+        category: AndroidNotificationCategory.alarm,
+        visibility: NotificationVisibility.public,
+        autoCancel: false,
+        ongoing: false,
+        styleInformation: BigTextStyleInformation(
+          reminder.notes?.isNotEmpty == true
+              ? reminder.notes!
+              : 'Tap to view your reminder',
+          contentTitle: reminder.title,
+          summaryText: reminder.repeatLabel,
+        ),
       );
 
-      const NotificationDetails details =
+      final NotificationDetails details =
           NotificationDetails(android: androidDetails);
-
-      final int id = reminder.id.hashCode.abs() % 2147483647;
 
       switch (reminder.repeatType) {
         case RepeatType.once:
           await _plugin.zonedSchedule(
             id,
-            'Remindu',
-            reminder.title,
+            '⏰ ${reminder.title}',
+            reminder.notes?.isNotEmpty == true
+                ? reminder.notes!
+                : 'Tap to view your reminder',
             scheduledDate,
             details,
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -59,8 +124,10 @@ class NotificationService {
         case RepeatType.daily:
           await _plugin.zonedSchedule(
             id,
-            'Remindu',
-            reminder.title,
+            '⏰ ${reminder.title}',
+            reminder.notes?.isNotEmpty == true
+                ? reminder.notes!
+                : 'Tap to view your reminder',
             scheduledDate,
             details,
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -73,8 +140,10 @@ class NotificationService {
         case RepeatType.weekly:
           await _plugin.zonedSchedule(
             id,
-            'Remindu',
-            reminder.title,
+            '⏰ ${reminder.title}',
+            reminder.notes?.isNotEmpty == true
+                ? reminder.notes!
+                : 'Tap to view your reminder',
             scheduledDate,
             details,
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -87,8 +156,10 @@ class NotificationService {
         case RepeatType.monthly:
           await _plugin.zonedSchedule(
             id,
-            'Remindu',
-            reminder.title,
+            '⏰ ${reminder.title}',
+            reminder.notes?.isNotEmpty == true
+                ? reminder.notes!
+                : 'Tap to view your reminder',
             scheduledDate,
             details,
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -101,8 +172,10 @@ class NotificationService {
         case RepeatType.yearly:
           await _plugin.zonedSchedule(
             id,
-            'Remindu',
-            reminder.title,
+            '⏰ ${reminder.title}',
+            reminder.notes?.isNotEmpty == true
+                ? reminder.notes!
+                : 'Tap to view your reminder',
             scheduledDate,
             details,
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -113,13 +186,21 @@ class NotificationService {
           break;
       }
     } catch (e) {
-      // silent fail — don't crash app
+      // silent fail
     }
   }
 
   static Future<void> cancelReminder(String id) async {
     try {
       await _plugin.cancel(id.hashCode.abs() % 2147483647);
+    } catch (e) {
+      // silent fail
+    }
+  }
+
+  static Future<void> cancelAll() async {
+    try {
+      await _plugin.cancelAll();
     } catch (e) {
       // silent fail
     }
