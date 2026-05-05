@@ -23,29 +23,6 @@ class NotificationService {
         onDidReceiveNotificationResponse: _onNotificationTap,
         onDidReceiveBackgroundNotificationResponse: _onNotificationTap,
       );
-
-      await _createNotificationChannel();
-    } catch (e) {
-      // silent fail
-    }
-  }
-
-  static Future<void> _createNotificationChannel() async {
-    try {
-      const AndroidNotificationChannel channel = AndroidNotificationChannel(
-        'remindu_alarm_channel',
-        'Remindu Alarms',
-        description: 'Full screen alarm notifications for Remindu',
-        importance: Importance.max,
-        playSound: true,
-        enableVibration: true,
-        showBadge: true,
-      );
-
-      await _plugin
-          .resolvePlatformSpecificImplementation
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(channel);
     } catch (e) {
       // silent fail
     }
@@ -73,6 +50,8 @@ class NotificationService {
               ? reminder.notes!
               : 'Tap to view your reminder';
 
+      final String title = '⏰ ${reminder.title}';
+
       final AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
         'remindu_alarm_channel',
@@ -97,8 +76,6 @@ class NotificationService {
 
       final NotificationDetails details =
           NotificationDetails(android: androidDetails);
-
-      final String title = '⏰ ${reminder.title}';
 
       switch (reminder.repeatType) {
         case RepeatType.once:
