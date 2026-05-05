@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
@@ -32,7 +33,6 @@ class NotificationService {
         await androidPlugin.requestExactAlarmsPermission();
       }
 
-      // Create high priority notification channel
       await _createNotificationChannel();
     } catch (e) {
       // silent fail
@@ -77,7 +77,9 @@ class NotificationService {
 
       final int id = reminder.id.hashCode.abs() % 2147483647;
 
-      // Full screen intent details
+      final Int64List vibrationPattern =
+          Int64List.fromList([0, 500, 200, 500]);
+
       final AndroidNotificationDetails androidDetails =
           AndroidNotificationDetails(
         'remindu_alarm_channel',
@@ -87,14 +89,14 @@ class NotificationService {
         priority: Priority.max,
         playSound: true,
         enableVibration: true,
-        vibrationPattern: Int64List.fromList([0, 500, 200, 500]),
+        vibrationPattern: vibrationPattern,
         fullScreenIntent: true,
         category: AndroidNotificationCategory.alarm,
         visibility: NotificationVisibility.public,
         autoCancel: false,
         ongoing: false,
         styleInformation: BigTextStyleInformation(
-          reminder.notes?.isNotEmpty == true
+          reminder.notes != null && reminder.notes!.isNotEmpty
               ? reminder.notes!
               : 'Tap to view your reminder',
           contentTitle: reminder.title,
@@ -105,17 +107,21 @@ class NotificationService {
       final NotificationDetails details =
           NotificationDetails(android: androidDetails);
 
+      final String body =
+          reminder.notes != null && reminder.notes!.isNotEmpty
+              ? reminder.notes!
+              : 'Tap to view your reminder';
+
       switch (reminder.repeatType) {
         case RepeatType.once:
           await _plugin.zonedSchedule(
             id,
             '⏰ ${reminder.title}',
-            reminder.notes?.isNotEmpty == true
-                ? reminder.notes!
-                : 'Tap to view your reminder',
+            body,
             scheduledDate,
             details,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidScheduleMode:
+                AndroidScheduleMode.exactAllowWhileIdle,
             uiLocalNotificationDateInterpretation:
                 UILocalNotificationDateInterpretation.absoluteTime,
           );
@@ -125,12 +131,11 @@ class NotificationService {
           await _plugin.zonedSchedule(
             id,
             '⏰ ${reminder.title}',
-            reminder.notes?.isNotEmpty == true
-                ? reminder.notes!
-                : 'Tap to view your reminder',
+            body,
             scheduledDate,
             details,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidScheduleMode:
+                AndroidScheduleMode.exactAllowWhileIdle,
             uiLocalNotificationDateInterpretation:
                 UILocalNotificationDateInterpretation.absoluteTime,
             matchDateTimeComponents: DateTimeComponents.time,
@@ -141,15 +146,15 @@ class NotificationService {
           await _plugin.zonedSchedule(
             id,
             '⏰ ${reminder.title}',
-            reminder.notes?.isNotEmpty == true
-                ? reminder.notes!
-                : 'Tap to view your reminder',
+            body,
             scheduledDate,
             details,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidScheduleMode:
+                AndroidScheduleMode.exactAllowWhileIdle,
             uiLocalNotificationDateInterpretation:
                 UILocalNotificationDateInterpretation.absoluteTime,
-            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+            matchDateTimeComponents:
+                DateTimeComponents.dayOfWeekAndTime,
           );
           break;
 
@@ -157,15 +162,15 @@ class NotificationService {
           await _plugin.zonedSchedule(
             id,
             '⏰ ${reminder.title}',
-            reminder.notes?.isNotEmpty == true
-                ? reminder.notes!
-                : 'Tap to view your reminder',
+            body,
             scheduledDate,
             details,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidScheduleMode:
+                AndroidScheduleMode.exactAllowWhileIdle,
             uiLocalNotificationDateInterpretation:
                 UILocalNotificationDateInterpretation.absoluteTime,
-            matchDateTimeComponents: DateTimeComponents.dayOfMonthAndTime,
+            matchDateTimeComponents:
+                DateTimeComponents.dayOfMonthAndTime,
           );
           break;
 
@@ -173,12 +178,11 @@ class NotificationService {
           await _plugin.zonedSchedule(
             id,
             '⏰ ${reminder.title}',
-            reminder.notes?.isNotEmpty == true
-                ? reminder.notes!
-                : 'Tap to view your reminder',
+            body,
             scheduledDate,
             details,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            androidScheduleMode:
+                AndroidScheduleMode.exactAllowWhileIdle,
             uiLocalNotificationDateInterpretation:
                 UILocalNotificationDateInterpretation.absoluteTime,
             matchDateTimeComponents: DateTimeComponents.dateAndTime,
