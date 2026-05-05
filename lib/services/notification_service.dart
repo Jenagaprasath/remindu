@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import '../models/reminder.dart';
@@ -11,6 +12,10 @@ class NotificationService {
   static Future<void> init() async {
     try {
       tz.initializeTimeZones();
+
+      final String localTimezone =
+          await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(localTimezone));
 
       const AndroidInitializationSettings android =
           AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -35,10 +40,25 @@ class NotificationService {
 
   static Future<void> scheduleReminder(Reminder reminder) async {
     try {
-      final tz.TZDateTime scheduledDate =
-          tz.TZDateTime.from(reminder.dateTime, tz.local);
+      final String localTimezone =
+          await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(localTimezone));
 
-      if (scheduledDate.isBefore(tz.TZDateTime.now(tz.local))) return;
+      final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+
+      tz.TZDateTime scheduledDate = tz.TZDateTime(
+        tz.local,
+        reminder.dateTime.year,
+        reminder.dateTime.month,
+        reminder.dateTime.day,
+        reminder.dateTime.hour,
+        reminder.dateTime.minute,
+        0,
+      );
+
+      if (scheduledDate.isBefore(now)) {
+        if (reminder.repeatType == RepeatType.once) return;
+      }
 
       final int id = reminder.id.hashCode.abs() % 2147483647;
 
@@ -65,8 +85,7 @@ class NotificationService {
         fullScreenIntent: true,
         category: AndroidNotificationCategory.alarm,
         visibility: NotificationVisibility.public,
-        autoCancel: false,
-        ongoing: false,
+        autoCancel: true,
         styleInformation: BigTextStyleInformation(
           body,
           contentTitle: reminder.title,
