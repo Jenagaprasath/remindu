@@ -25,20 +25,6 @@ class NotificationService {
       );
 
       await _createNotificationChannel();
-      await _requestPermissions();
-    } catch (e) {
-      // silent fail
-    }
-  }
-
-  static Future<void> _requestPermissions() async {
-    try {
-      final plugin = _plugin.resolvePlatformSpecificImplementation
-          AndroidFlutterLocalNotificationsPlugin>();
-      if (plugin != null) {
-        await plugin.requestNotificationsPermission();
-        await plugin.requestExactAlarmsPermission();
-      }
     } catch (e) {
       // silent fail
     }
@@ -46,21 +32,20 @@ class NotificationService {
 
   static Future<void> _createNotificationChannel() async {
     try {
-      final plugin = _plugin.resolvePlatformSpecificImplementation
-          AndroidFlutterLocalNotificationsPlugin>();
-      if (plugin != null) {
-        const AndroidNotificationChannel channel =
-            AndroidNotificationChannel(
-          'remindu_alarm_channel',
-          'Remindu Alarms',
-          description: 'Full screen alarm notifications for Remindu',
-          importance: Importance.max,
-          playSound: true,
-          enableVibration: true,
-          showBadge: true,
-        );
-        await plugin.createNotificationChannel(channel);
-      }
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'remindu_alarm_channel',
+        'Remindu Alarms',
+        description: 'Full screen alarm notifications for Remindu',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+        showBadge: true,
+      );
+
+      await _plugin
+          .resolvePlatformSpecificImplementation
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channel);
     } catch (e) {
       // silent fail
     }
